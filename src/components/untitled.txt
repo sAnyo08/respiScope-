@@ -1,0 +1,145 @@
+"use client"
+
+import { useState } from "react"
+import { Button } from "./components/button"
+import { Heart, Mic, User, Users, Clock, LogOut } from "lucide-react"
+import { DoctorCard } from "./components/doctor-card"
+import { DeviceConnection } from "./components/device-connection"
+import { RecordingInstructions } from "./components/recording-instructions"
+import { RecordingControls } from "./components/recording-controls"
+import { RecentRecordings } from "./components/recent-recordings"
+
+const doctors = [
+  { id: "1", name: "1234", credentials: "MD", experience: 3, location: "daefrgt", phone: "asdfgh", doctorId: "DOC913337", avatar: "1" },
+  { id: "2", name: "1234", credentials: "yuvu", experience: 5, location: "ychgvjbk", phone: "1234567890", doctorId: "DOC698293", avatar: "1" },
+  { id: "3", name: "sanyo", credentials: "md", experience: 12, location: "123456", phone: "1234567890", doctorId: "DOC579789", avatar: "S" },
+]
+
+export default function PatientPortal() {
+  const [activeTab, setActiveTab] = useState("doctors")
+  const [selectedDoctorId, setSelectedDoctorId] = useState("")
+  const [currentStep, setCurrentStep] = useState(1)
+  const [isRecording, setIsRecording] = useState(false)
+  const [timer, setTimer] = useState(0)
+  const [recordings, setRecordings] = useState([])
+
+  const handleConsult = (doctorId) => {
+    setSelectedDoctorId(doctorId)
+    setActiveTab("record")
+  }
+
+  const handleStartRecording = () => {
+    if (isRecording) return
+
+    setIsRecording(true)
+    setTimer(0)
+
+    const interval = setInterval(() => {
+      setTimer((prev) => {
+        if (prev >= 9) {
+          clearInterval(interval)
+          setIsRecording(false)
+
+          const stepNames = ["Connect Device", "Position Device", "Record Heart", "Analyze Data", "Share Results"]
+          const newRecording = {
+            id: Date.now().toString(),
+            timestamp: new Date(),
+            step: currentStep,
+            stepName: stepNames[currentStep - 1],
+            duration: 10,
+          }
+          setRecordings((prev) => [...prev, newRecording])
+
+          if (currentStep < 5) {
+            setCurrentStep((prev) => prev + 1)
+          }
+
+          return 0
+        }
+        return prev + 1
+      })
+    }, 1000)
+  }
+
+  return (
+    <div className="min-h-screen bg-teal-50">
+      {/* Header */}
+      <header className="bg-teal-50 px-6 py-4 flex items-center justify-between border-b border-teal-100">
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 bg-teal-700 rounded-full flex items-center justify-center">
+            <Heart className="w-6 h-6 text-white fill-white" />
+          </div>
+          <div>
+            <h1 className="text-xl font-semibold text-teal-800">MediConnect</h1>
+            <p className="text-sm text-gray-600">Patient Portal</p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-4">
+          <div className="text-right">
+            <p className="font-medium text-gray-800">Sanyo Fonseca</p>
+            <p className="text-sm text-gray-600">Patient ID: 207017</p>
+          </div>
+          <Button className="text-gray-600 hover:text-gray-800">
+            <LogOut className="w-4 h-4 mr-2" />
+            Logout
+          </Button>
+        </div>
+      </header>
+
+      {/* Navigation */}
+      <nav className="bg-white px-6 py-4">
+        <div className="flex items-center justify-center gap-8">
+          <Button className="flex items-center gap-2 text-gray-600 hover:text-teal-700" onClick={() => setActiveTab("home")}>
+            <Heart className="w-4 h-4" /> Home
+          </Button>
+          <Button
+            className={`flex items-center gap-2 ${activeTab === "record" ? "bg-white border-2 border-teal-700 text-teal-700 hover:bg-teal-50 px-6" : "text-gray-600 hover:text-teal-700"}`}
+            onClick={() => setActiveTab("record")}
+          >
+            <Mic className="w-4 h-4" /> Record
+          </Button>
+          <Button className="flex items-center gap-2 text-gray-600 hover:text-teal-700" onClick={() => setActiveTab("profile")}>
+            <User className="w-4 h-4" /> Profile
+          </Button>
+          <Button
+            className={`flex items-center gap-2 ${activeTab === "doctors" ? "bg-white border-2 border-teal-700 text-teal-700 hover:bg-teal-50 px-6" : "text-gray-600 hover:text-teal-700"}`}
+            onClick={() => setActiveTab("doctors")}
+          >
+            <Users className="w-4 h-4" /> Doctors
+          </Button>
+          <Button className="flex items-center gap-2 text-gray-600 hover:text-teal-700" onClick={() => setActiveTab("history")}>
+            <Clock className="w-4 h-4" /> History
+          </Button>
+        </div>
+      </nav>
+
+      <main className="px-6 py-8">
+        <div className="max-w-4xl mx-auto">
+          {activeTab === "doctors" && (
+            <div className="bg-teal-50 rounded-lg p-8">
+              <div className="mb-8">
+                <h2 className="text-2xl font-semibold text-gray-800 mb-2">Available Doctors</h2>
+                <p className="text-gray-600">Choose a doctor for your consultation</p>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {doctors.map((doctor) => (
+                  <DoctorCard key={doctor.id} doctor={doctor} onConsult={handleConsult} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {activeTab === "record" && (
+            <div className="space-y-6">
+              <DeviceConnection />
+              <RecordingInstructions currentStep={currentStep} />
+              <RecordingControls isRecording={isRecording} timer={timer} onStartRecording={handleStartRecording} />
+              <RecentRecordings recordings={recordings} selectedDoctorId={selectedDoctorId} />
+            </div>
+          )}
+        </div>
+      </main>
+    </div>
+  )
+}

@@ -1,12 +1,13 @@
-import { Button } from "../ui/Button";
-import { Heart, Mic, User, Users, Clock, LogOut } from "lucide-react";
+// import { Button } from "../ui/Button";
+//import { Heart, Mic, User, Users, Clock, LogOut, Doctor } from "lucide-react";
 import { DoctorCard } from "./DoctorCard";
-import { useState } from "react";
+//import { useState } from "react";
 
 const doctors = [
-    { id: "1", name: "1234", credentials: "MD", experience: 3, location: "daefrgt", phone: "asdfgh", doctorId: "DOC913337", avatar: "1" },
-    { id: "2", name: "1234", credentials: "yuvu", experience: 5, location: "ychgvjbk", phone: "1234567890", doctorId: "DOC698293", avatar: "1" },
-    { id: "3", name: "sanyo", credentials: "md", experience: 12, location: "123456", phone: "1234567890", doctorId: "DOC579789", avatar: "S" },
+    { id: "1", name: "Dr. Adarsh Gupta", credentials: "MD", experience: 25, location: "Mumbai", phone: "3456255565", doctorId: "DOC913337", avatar: "AD" },
+    { id: "2", name: "Dr. Allan Monis", credentials: "BHMS", experience: 5, location: "Chennai", phone: "1234567890", doctorId: "DOC698293", avatar: "AL" },
+    { id: "3", name: "Dr. Sanyo Fonseca", credentials: "MBBS", experience: 12, location: "Bangalore", phone: "1234567890", doctorId: "DOC579789", avatar: "SA" },
+    { id: "4", name: "Dr. Vatsal C", credentials: "MBBS", experience: 12, location: "Delhi", phone: "1234567890", doctorId: "DOC577258", avatar: "VA" },
   ]
 
 // const [activeTab, setActiveTab] = useState("doctors")

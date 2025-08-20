@@ -3,6 +3,9 @@
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import PatientCard from "../../utils/PatientCard" // ✅ import the reusable card
+import { Home, Mic, User, Users, Clock, LogOut, Activity, UserCheck, Calendar, Stethoscope, UserPlus ,UserPen, ClipboardClock, CalendarCheck } from "lucide-react"
+import { Button } from "../../ui/Button"
+import { Card, CardContent, CardTitle, CardHeader } from "../../ui/Card"
 
 const DoctorDashboard = () => {
   const [activeTab, setActiveTab] = useState("Dashboard")
@@ -11,17 +14,17 @@ const DoctorDashboard = () => {
   const handleLogout = () => navigate("/")
 
   const tabs = [
-    { name: "Dashboard", icon: "♥" },
-    { name: "Consultations", icon: "💬" },
-    { name: "Patients", icon: "👥" },
-    { name: "Profile", icon: "👤" },
+    { name: "Dashboard", icon: <Home className="w-4 h-4" /> },
+    { name: "Consultations", icon: <UserCheck className="w-4 h-4" /> },
+    { name: "Patients", icon: <UserPlus  className="w-4 h-4" /> },
+    { name: "Profile", icon: <UserPen ser className="w-4 h-4" /> },
   ]
 
   const metrics = [
-    { title: "Total Patients", value: "4", subtitle: "Registered patients", icon: "👥" },
-    { title: "Consultations", value: "0", subtitle: "Total consultations", icon: "📊" },
-    { title: "Pending", value: "0", subtitle: "Awaiting review", icon: "⏰" },
-    { title: "Experience", value: "12", subtitle: "Years of practice", icon: "📅" },
+    { title: "Total Patients", value: "4", subtitle: "Registered patients", icon: <Users /> },
+    { title: "Consultations", value: "0", subtitle: "Total consultations", icon: <UserCheck /> },
+    { title: "Pending", value: "0", subtitle: "Awaiting review", icon: <ClipboardClock/> },
+    { title: "Experience", value: "12", subtitle: "Years of practice", icon: <CalendarCheck /> },
   ]
 
   const patients = [
@@ -36,33 +39,33 @@ const DoctorDashboard = () => {
       {/* Header */}
       <header className="bg-mint-600 shadow-md border-b border-mint-700">
         <div className="max-w-7xl mx-auto px-6 flex justify-between items-center h-16">
-          <div className="flex items-center space-x-3">
-            <div className="w-12 h-12 bg-mint-800 rounded-full flex items-center justify-center shadow-lg">
-              <span className="text-white font-bold text-lg">M</span>
+        <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <div className="w-10 h-10 bg-teal-600 rounded-full flex items-center justify-center">
+                  <span className="text-white font-bold text-lg"><Stethoscope /></span>
+                </div>
+              </div>
+              <div className="ml-4">
+                <h1 className="text-xl font-semibold text-gray-900">RespiScope</h1>
+                <p className="text-sm text-gray-500">Doctor Portal</p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-2xl font-bold text-mint-50">RespiScope</h1>
-              <p className="text-sm text-mint-100">Doctor Portal</p>
-            </div>
-          </div>
           <div className="flex items-center space-x-4">
             <div className="text-right">
               <p className="text-sm font-semibold text-mint-50">Dr. Sanyo</p>
               <p className="text-xs text-mint-200">Code: DOC579789</p>
             </div>
-            <button
-              onClick={handleLogout}
-              className="flex items-center space-x-1 px-3 py-1 bg-mint-300 rounded-lg hover:bg-mint-400 transition-colors text-mint-50 font-medium shadow-sm"
-            >
-              <span>↗</span>
+            <Button variant="ghost" size="sm" onClick={handleLogout} className="flex items-center space-x-1">
+              <LogOut className="h-4 w-4" />
               <span>Logout</span>
-            </button>
+            </Button>
+
           </div>
         </div>
       </header>
 
       {/* Navigation Tabs */}
-      <nav className="bg-mint-500 border-b border-mint-700 shadow-sm">
+      {/* <nav className="bg-mint-500 border-b border-mint-700 shadow-sm">
         <div className="max-w-7xl mx-auto px-6">
           <div className="flex space-x-6">
             {tabs.map((tab) => (
@@ -81,27 +84,45 @@ const DoctorDashboard = () => {
             ))}
           </div>
         </div>
+      </nav> */}
+      <nav className="bg-white px-6 py-4">
+        <div className="flex items-center justify-center gap-8">
+          {tabs.map((tab) => (
+            <Button
+              key={tab.name}
+              variant={activeTab === tab.name ? "outline" : "ghost"}
+              className={`flex items-center gap-2 ${activeTab === tab.name ? "bg-white border-2 border-teal-700 text-teal-700 px-6" : "text-gray-600 hover:text-teal-700"}`}
+              onClick={() => setActiveTab(tab.name)}
+            >
+              {tab.icon}
+              {tab.name}
+            </Button>
+          ))}
+        </div>
       </nav>
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-6 py-8 space-y-8">
         {activeTab === "Dashboard" && (
-          <div className="space-y-8">
+          <div>
+            {/* <div className="space-y-8"> */}
             {/* Metrics Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
               {metrics.map((metric, index) => (
                 <div
                   key={index}
-                  className="bg-mint-400 rounded-2xl p-6 border border-mint-600 shadow-lg hover:shadow-xl transition-shadow"
+                  className="bg-mint-400 rounded-2xl p-2 border border-mint-800 shadow-lg hover:shadow-xl transition-shadow"
                 >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-mint-50">{metric.title}</p>
-                      <p className="text-3xl font-bold text-mint-50 mt-2">{metric.value}</p>
-                      <p className="text-sm text-mint-200 mt-1">{metric.subtitle}</p>
-                    </div>
-                    <div className="text-3xl text-mint-50">{metric.icon}</div>
-                  </div>
+                  <Card className="bg-blue-50 border-blue-300 border-2">
+                    <CardContent className="p-6 flex justify-between items-center">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">{metric.title}</p>
+                        <p className="text-3xl font-bold text-gray-900 mt-2">{metric.value}</p>
+                        <p className="text-sm text-gray-500 mt-1">{metric.subtitle}</p>
+                      </div>
+                      <div className="text-4xl text-mint-50">{metric.icon}</div>
+                    </CardContent>
+                  </Card>
                 </div>
               ))}
             </div>

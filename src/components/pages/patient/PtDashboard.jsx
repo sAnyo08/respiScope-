@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import PatientCard from "../../utils/PatientCard"
-import { Home, Mic, User, Users, Clock, LogOut, Activity, UserCheck, Calendar } from "lucide-react"
+import { Home, Mic, User, Users, Clock, LogOut, Activity, UserCheck, Calendar, Stethoscope } from "lucide-react"
 import { Button } from "../../ui/Button"
 import { Card, CardContent, CardTitle, CardHeader } from "../../ui/Card"
 import History from "../../utils/History"
@@ -38,11 +38,11 @@ const PatientDashboard = () => {
             <div className="flex items-center">
               <div className="flex-shrink-0">
                 <div className="w-10 h-10 bg-teal-600 rounded-full flex items-center justify-center">
-                  <span className="text-white font-bold text-lg">M</span>
+                  <span className="text-white font-bold text-lg"><Stethoscope  /></span>
                 </div>
               </div>
               <div className="ml-4">
-                <h1 className="text-xl font-semibold text-gray-900">MediConnect</h1>
+                <h1 className="text-xl font-semibold text-gray-900">RespiScope</h1>
                 <p className="text-sm text-gray-500">Patient Portal</p>
               </div>
             </div>
@@ -83,7 +83,7 @@ const PatientDashboard = () => {
           <div>
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-              <Card className="bg-green-50 border-green-200">
+              <Card className="bg-green-50 border-green-200 border-2">
                 <CardContent className="p-6 flex justify-between items-center">
                   <div>
                     <p className="text-sm font-medium text-gray-600">Total Consultations</p>
@@ -93,7 +93,7 @@ const PatientDashboard = () => {
                   <Activity className="h-8 w-8 text-green-600" />
                 </CardContent>
               </Card>
-              <Card className="bg-blue-50 border-blue-200">
+              <Card className="bg-blue-50 border-blue-200 border-2">
                 <CardContent className="p-6 flex justify-between items-center">
                   <div>
                     <p className="text-sm font-medium text-gray-600">Available Doctors</p>
@@ -103,7 +103,7 @@ const PatientDashboard = () => {
                   <UserCheck className="h-8 w-8 text-blue-600" />
                 </CardContent>
               </Card>
-              <Card className="bg-orange-50 border-orange-200">
+              <Card className="bg-orange-50 border-orange-200 border-2">
                 <CardContent className="p-6 flex justify-between items-center">
                   <div>
                     <p className="text-sm font-medium text-gray-600">Last Checkup</p>

@@ -8,6 +8,7 @@ require('dotenv').config();
 const doctorAuthRoutes = require('./routes/doctorAuth');
 const patientAuthRoutes = require('./routes/patientAuth');
 
+
 const app = express();
 
 app.use(helmet());

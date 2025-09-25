@@ -24,9 +24,9 @@
 // export default App;
 
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom"
-import PatientAuth from "../src/components/Auth/PatientAuth"
+import PatientAuth from "../src/services/auth/PatientAuth"
 import Landing from "../src/components/pages/landing"
-import DoctorAuth from "../src/components/Auth/DrAuth"
+import DoctorAuth from "../src/services/auth/DrAuth"
 import DoctorDashboard from "../src/components/pages/doctor/DrDashboard"
 import PatientDashboard from "../src/components/pages/patient/PtDashboard"
 import DrPatients from "../src/components/pages/doctor/DrPatients"
@@ -35,6 +35,7 @@ import "./App.css"
 function App() {
   return (
     <Router>
+      
       <div className="App">
         <Routes>
           <Route path="/" element={<Landing />} />
@@ -43,7 +44,6 @@ function App() {
           <Route path="/doctor-dashboard" element={<DoctorDashboard />} />
           <Route path="/patient-dashboard" element={<PatientDashboard />} />
           <Route path="/drpatients" element={<DrPatients />} />
-         
         </Routes>
       </div>
     </Router>

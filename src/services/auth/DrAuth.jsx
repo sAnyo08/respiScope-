@@ -2,9 +2,9 @@
 
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/Card"
-import { Button } from "../ui/Button"
-import { Input } from "../ui/Input"
+import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/Card"
+import { Button } from "../../components/ui/Button"
+import { Input } from "../../components/ui/Input"
 
 export default function DoctorAuth() {
   const navigate = useNavigate()

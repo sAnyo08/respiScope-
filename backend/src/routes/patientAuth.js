@@ -10,6 +10,7 @@ router.post('/login', loginValidation, validate, controller.loginPatient);
 router.post('/refresh', controller.refresh);
 router.post('/logout', controller.logout);
 
+
 // Example protected route
 router.get('/me', auth('patient'), (req, res) => {
   res.json({ user: req.user });

@@ -1,13 +1,15 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useContext } from "react"
 import { useNavigate } from "react-router-dom"
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/Card"
 import { Button } from "../../components/ui/Button"
 import { Input } from "../../components/ui/Input"
+import { AuthContext } from "../../context/authContext"
 
 export default function DoctorAuth() {
   const navigate = useNavigate()
+  const { login } = useContext(AuthContext);
   const [authMode, setAuthMode] = useState("login")
   const [doctorForm, setDoctorForm] = useState({
     name: "",

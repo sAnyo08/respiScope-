@@ -1,13 +1,16 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useContext } from "react"
 import { useNavigate } from "react-router-dom"
 import PatientCard from "../../utils/PatientCard" // ✅ import the reusable card
 import { Home, Mic, User, Users, Clock, LogOut, Activity, UserCheck, Calendar, Stethoscope, UserPlus ,UserPen, ClipboardClock, CalendarCheck } from "lucide-react"
 import { Button } from "../../ui/Button"
 import { Card, CardContent, CardTitle, CardHeader } from "../../ui/Card"
+import { AuthContext } from "../../../context/authContext"
 
 const DoctorDashboard = () => {
+  const { user, login } = useContext(AuthContext);
+
   const [activeTab, setActiveTab] = useState("Dashboard")
   const navigate = useNavigate()
 

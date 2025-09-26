@@ -1,39 +1,44 @@
 const Patient = require("../models/Patient");
 const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
-
-const JWT_SECRET = process.env.JWT_SECRET;
-const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
+const crypto = require("crypto");
+const {
+  signAccessToken,
+  signRefreshToken,
+  verifyRefreshToken,
+} = require("../utils/jwt");
 
 // Register Patient
 exports.registerPatient = async (req, res) => {
   try {
-    const { name, phone, password, age, gender, address, height, weight, priorDisease } = req.body;
+    const { name, phone, password, age, gender, address, height, weight, priorDisease } =
+      req.body;
 
     let existingPatient = await Patient.findOne({ phone });
     if (existingPatient) {
-      return res.status(400).json({ message: "Patient already exists with this phone number" });
+      return res
+        .status(409)
+        .json({ message: "Patient already exists with this phone number" });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
-
+    // Schema pre('save') will hash password
     const newPatient = new Patient({
       name,
       phone,
-      password: hashedPassword,
+      password, // raw password
       age,
       gender,
       address,
       height,
       weight,
-      priorDisease
+      priorDisease,
     });
 
     await newPatient.save();
 
     res.status(201).json({ message: "Patient registered successfully" });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error("registerPatient error:", err);
+    res.status(500).json({ message: err.message || "Server error" });
   }
 };
 
@@ -44,73 +49,110 @@ exports.loginPatient = async (req, res) => {
 
     const patient = await Patient.findOne({ phone });
     if (!patient) {
-      return res.status(400).json({ message: "Patient not found" });
+      return res.status(404).json({ message: "Patient not found" });
     }
 
-    const isMatch = await bcrypt.compare(password, patient.password);
+    const isMatch = await patient.comparePassword(password);
     if (!isMatch) {
-      return res.status(400).json({ message: "Invalid credentials" });
+      return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    const accessToken = jwt.sign({ id: patient._id, role: "patient" }, JWT_SECRET, { expiresIn: "15m" });
-    const refreshToken = jwt.sign({ id: patient._id, role: "patient" }, JWT_REFRESH_SECRET, { expiresIn: "7d" });
+    const accessToken = signAccessToken({ id: patient._id, role: "patient" });
+    const refreshToken = signRefreshToken({ id: patient._id, role: "patient" });
 
-    patient.refreshToken = refreshToken;
+    // Store hashed refresh token in DB
+    patient.refreshToken = crypto
+      .createHash("sha256")
+      .update(refreshToken)
+      .digest("hex");
     await patient.save();
 
-    res.json({ accessToken, refreshToken, patient });
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      maxAge:
+        parseInt(process.env.REFRESH_TOKEN_MAX_AGE_MS, 10) ||
+        7 * 24 * 60 * 60 * 1000,
+    });
+
+    res.json({ accessToken, patient: patient.toJSON() });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error("loginPatient error:", err);
+    res.status(500).json({ message: err.message || "Server error" });
   }
 };
 
+// Refresh Token
 exports.refresh = async (req, res, next) => {
   try {
     const token = req.cookies.refreshToken || req.body.refreshToken;
-    if (!token) return res.status(401).json({ message: 'No refresh token' });
+    if (!token) return res.status(401).json({ message: "No refresh token" });
 
     const payload = verifyRefreshToken(token);
-    if (!payload) return res.status(401).json({ message: 'Invalid refresh token' });
-    if (payload.role !== 'patient') return res.status(403).json({ message: 'Role mismatch' });
+    if (!payload) return res.status(401).json({ message: "Invalid refresh token" });
+    if (payload.role !== "patient")
+      return res.status(403).json({ message: "Role mismatch" });
 
     const patient = await Patient.findById(payload.id);
-    if (!patient || patient.refreshToken !== token) {
-      return res.status(401).json({ message: 'Invalid refresh token (not matched)' });
+    if (!patient) {
+      return res.status(401).json({ message: "User not found" });
     }
 
-    const newAccessToken = signAccessToken({ id: patient._id, role: 'patient' });
-    const newRefreshToken = signRefreshToken({ id: patient._id, role: 'patient' });
+    // Validate stored hashed token
+    const hashed = crypto.createHash("sha256").update(token).digest("hex");
+    if (patient.refreshToken !== hashed) {
+      return res.status(401).json({ message: "Invalid refresh token (not matched)" });
+    }
 
-    patient.refreshToken = newRefreshToken;
+    const newAccessToken = signAccessToken({ id: patient._id, role: "patient" });
+    const newRefreshToken = signRefreshToken({ id: patient._id, role: "patient" });
+
+    // Save hashed new refresh token
+    patient.refreshToken = crypto
+      .createHash("sha256")
+      .update(newRefreshToken)
+      .digest("hex");
     await patient.save();
 
-    res.cookie('refreshToken', newRefreshToken, { httpOnly: true, sameSite: 'lax' });
+    res.cookie("refreshToken", newRefreshToken, {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      maxAge:
+        parseInt(process.env.REFRESH_TOKEN_MAX_AGE_MS, 10) ||
+        7 * 24 * 60 * 60 * 1000,
+    });
+
     res.json({ accessToken: newAccessToken });
   } catch (err) {
+    console.error("patient refresh error:", err);
     next(err);
   }
 };
 
+// Logout
 exports.logout = async (req, res, next) => {
   try {
     const token = req.cookies.refreshToken || req.body.refreshToken;
     if (token) {
       try {
         const payload = verifyRefreshToken(token);
-        if (payload && payload.role === 'patient') {
+        if (payload && payload.role === "patient") {
           const patient = await Patient.findById(payload.id);
           if (patient) {
             patient.refreshToken = null;
             await patient.save();
           }
         }
-      } catch (e) {}
+      } catch (e) {
+        console.error("logout token verify failed:", e.message || e);
+      }
     }
-    res.clearCookie('refreshToken');
-    res.json({ message: 'Logged out' });
+    res.clearCookie("refreshToken");
+    res.json({ message: "Logged out" });
   } catch (err) {
+    console.error("logout error:", err);
     next(err);
   }
 };
-
-// module.exports = { registerPatient, loginPatient, refresh, logout };

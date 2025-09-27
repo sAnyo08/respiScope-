@@ -5,20 +5,27 @@ const rateLimit = require('express-rate-limit');
 const cookieParser = require('cookie-parser');
 require('dotenv').config();
 
-const doctorAuthRoutes = require('./routes/doctorAuth');
-const patientAuthRoutes = require('./routes/patientAuth');
+// ✅ Unified routes
+const authRoutes = require("./routes/authRoutes");
+const patientRoutes = require("./routes/patientRoutes");
+const doctorRoutes = require("./routes/doctorRoutes");
+// const doctorAuthRoutes = require('./routes/doctorAuth');
+// const patientAuthRoutes = require('./routes/patientAuth');
 
 
 const app = express();
 
+// Middleware
 app.use(helmet());
 app.use(express.json());
 app.use(cookieParser());
 
-app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
-  credentials: true
-}));
+app.use(
+  cors({
+    origin: process.env.CORS_ORIGIN || "http://localhost:3000",
+    credentials: true,
+  })
+);
 
 const limiter = rateLimit({
   windowMs: 60 * 1000,
@@ -26,8 +33,11 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
-app.use('/api/auth/doctor', doctorAuthRoutes);
-app.use('/api/auth/patient', patientAuthRoutes);
+// Routes
+app.use("/api/auth", authRoutes);
+app.use("/api/patients", patientRoutes);
+app.use("/api/doctors", doctorRoutes);
+// app.use('/api/profile', authRoutes);
 
 app.get('/api/health', (req, res) => res.json({ ok: true }));
 

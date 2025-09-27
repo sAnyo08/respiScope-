@@ -3,7 +3,7 @@ import React, { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom"; // ✅ import useNavigate
 import { AuthContext } from "../../context/authContext";
 
-const API_URL = "http://localhost:5000/api/auth/doctor";
+const API_URL = "http://localhost:5000/api/auth";
 
 export default function DoctorAuthPage() {
   const navigate = useNavigate(); // <-- hook
@@ -11,6 +11,7 @@ export default function DoctorAuthPage() {
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({
     name: "",
+    role: "",
     phone: "",
     password: "",
     degree: "",
@@ -30,7 +31,7 @@ export default function DoctorAuthPage() {
     setMessage("");
 
     try {
-      const url = isLogin ? `${API_URL}/login` : `${API_URL}/register`;
+      const url = isLogin ? `${API_URL}/login/doctor` : `${API_URL}/register/doctor`;
       const body = isLogin
         ? { phone: formData.phone, password: formData.password }
         : formData;
@@ -71,6 +72,7 @@ export default function DoctorAuthPage() {
         {!isLogin && (
           <>
             <input type="text" name="name" placeholder="Name" onChange={handleChange} required />
+            <input type="text" name="role" placeholder="Doctor" onChange={handleChange} required />
             <input type="text" name="degree" placeholder="Degree" onChange={handleChange} />
             <input type="text" name="experience" placeholder="Experience" onChange={handleChange} />
             <input type="text" name="address" placeholder="Address" onChange={handleChange} />

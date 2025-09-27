@@ -1,7 +1,7 @@
 "use client"
 
 import { Button } from "../ui/Button"
-import { Card } from "../ui/Card"
+import { Card , CardTitle} from "../ui/Card"
 import { Calendar, MapPin, Phone } from "lucide-react"
 
 export function DoctorCard({ doctor, onConsult }) {
@@ -14,7 +14,7 @@ export function DoctorCard({ doctor, onConsult }) {
 
         <div className="flex-1 space-y-3">
           <div>
-            <h3 className="font-semibold text-gray-900">{doctor.name}</h3>
+            <CardTitle className="text-lg">{doctor.name}</CardTitle>
             <p className="text-sm text-gray-600">{doctor.credentials}</p>
           </div>
 

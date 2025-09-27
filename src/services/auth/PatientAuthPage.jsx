@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom"; // ✅ import useNavigate
 
 import { AuthContext } from "../../context/authContext";
 
-const API_URL = "http://localhost:5000/api/auth/patient";
+const API_URL = "http://localhost:5000/api/auth";
 
 export default function PatientAuthPage() {
   const navigate = useNavigate(); // <-- hook
@@ -12,6 +12,7 @@ export default function PatientAuthPage() {
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({
     name: "",
+    role: "",
     phone: "",
     password: "",
     age: "",
@@ -33,7 +34,7 @@ export default function PatientAuthPage() {
     setMessage("");
 
     try {
-      const url = isLogin ? `${API_URL}/login` : `${API_URL}/register`;
+      const url = isLogin ? `${API_URL}/login/patient` : `${API_URL}/register/patient`;
       const body = isLogin
         ? { phone: formData.phone, password: formData.password }
         : formData;
@@ -74,6 +75,7 @@ export default function PatientAuthPage() {
         {!isLogin && (
           <>
             <input type="text" name="name" placeholder="Name" onChange={handleChange} required />
+            <input type="text" name="role" placeholder="Patient" onChange={handleChange} required />
             <input type="number" name="age" placeholder="Age" onChange={handleChange} />
             <input type="text" name="gender" placeholder="Gender" onChange={handleChange} />
             <input type="text" name="address" placeholder="Address" onChange={handleChange} />

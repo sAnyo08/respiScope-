@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import PatientCard from "../../utils/PatientCard"
 import { Home, Mic, User, Users, Clock, LogOut, Activity, UserCheck, Calendar, Stethoscope } from "lucide-react"
@@ -9,6 +9,11 @@ import { Card, CardContent, CardTitle, CardHeader } from "../../ui/Card"
 import History from "../../utils/History"
 import PatientPortal from "../../utils/record/Record"
 import PaitentDoctors from "../../utils/patientDoctors"
+import { getDoctors } from "../../../services/api/doctorService"
+import { DoctorCard } from "../../utils/DoctorCard"
+import PatientProfile from "../../utils/PatientProfile"
+import Navbar from "../../utils/Navbar"
+
 
 const PatientDashboard = () => {
   const [activeTab, setActiveTab] = useState("Home")
@@ -24,41 +29,30 @@ const PatientDashboard = () => {
     { name: "History", icon: <Clock className="w-4 h-4" /> },
   ]
 
-  const patients = [
-    { id: 1, name: "Arjun Mehta", age: 32, gender: "Male", lastVisit: "2024-07-10", condition: "Asthma", status: "Active" },
-    { id: 2, name: "Priya Sharma", age: 27, gender: "Female", lastVisit: "2024-06-18", condition: "Diabetes", status: "Follow-up" },
-  ]
+  // const patients = [
+  //   { id: 1, name: "Arjun Mehta", age: 32, gender: "Male", lastVisit: "2024-07-10", condition: "Asthma", status: "Active" },
+  //   { id: 2, name: "Priya Sharma", age: 27, gender: "Female", lastVisit: "2024-06-18", condition: "Diabetes", status: "Follow-up" },
+  // ]
+
+  const [doctors, setDoctors] = useState([]);
+
+  useEffect(() => {
+    const fetchDoctors = async () => {
+      try {
+        const data = await getDoctors();
+        setDoctors(data);
+      } catch (error) {
+        console.error("Failed to load patients", error);
+      }
+    };
+
+    fetchDoctors();
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-mint-300 to-mint-400">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <div className="w-10 h-10 bg-teal-600 rounded-full flex items-center justify-center">
-                  <span className="text-white font-bold text-lg"><Stethoscope  /></span>
-                </div>
-              </div>
-              <div className="ml-4">
-                <h1 className="text-xl font-semibold text-gray-900">RespiScope</h1>
-                <p className="text-sm text-gray-500">Patient Portal</p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-4">
-              <div className="text-right">
-                <p className="text-sm font-medium text-gray-900">Sanyo Fonseca</p>
-                <p className="text-xs text-gray-500">Patient ID: 207017</p>
-              </div>
-              <Button variant="ghost" size="sm" onClick={handleLogout} className="flex items-center space-x-1">
-                <LogOut className="h-4 w-4" />
-                <span>Logout</span>
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
+      <Navbar />
 
       {/* Navigation */}
       <nav className="bg-white px-6 py-4">
@@ -124,16 +118,22 @@ const PatientDashboard = () => {
         )}
 
         {activeTab === "Profile" && (
-          <div className="bg-mint-500 rounded-2xl shadow-lg border border-mint-700 p-6 hover:shadow-xl transition-shadow">
-            <h2 className="text-xl font-semibold text-mint-50 mb-4">Profile</h2>
-            <p className="text-mint-200">Patient profile details coming soon...</p>
-          </div>
+          <PatientProfile />
         )}
 
         {activeTab === "History" && <History />}
 
         {activeTab === "Doctors" && (
-          <PaitentDoctors />
+          <div className="bg-mint-500 rounded-2xl shadow-lg border border-mint-700 p-6 hover:shadow-xl transition-shadow">
+          <h2 className="text-xl font-semibold text-mint-50 mb-6">Doctors</h2>
+
+          {/* Patients Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {doctors.map((doctor) => (
+                <DoctorCard key={doctor.id} doctor={doctor} />
+              ))}
+          </div>
+        </div>
         )}
       </main>
     </div>

@@ -21,28 +21,28 @@ function App() {
           {/* Doctor Protected */}
           <Route
             path="/doctor-dashboard"
-            element={
-              <ProtectedRoute requiredRole="doctor">
-                <DoctorDashboard />
-              </ProtectedRoute>
+            element={ <DoctorDashboard />
+              // <ProtectedRoute requiredRole="doctor">
+              //   <DoctorDashboard />
+              // </ProtectedRoute>
             }
           />
           <Route
             path="/drpatients"
-            element={
-              <ProtectedRoute requiredRole="doctor">
-                <DrPatients />
-              </ProtectedRoute>
+            element={<DrPatients />
+              // <ProtectedRoute requiredRole="doctor">
+              //   <DrPatients />
+              // </ProtectedRoute>
             }
           />
 
           {/* Patient Protected */}
           <Route
             path="/patient-dashboard"
-            element={
-              <ProtectedRoute requiredRole="patient">
-                <PatientDashboard />
-              </ProtectedRoute>
+            element={<PatientDashboard />
+              // <ProtectedRoute requiredRole="patient">
+              //   <PatientDashboard />
+              // </ProtectedRoute>
             }
           />
         </Routes>

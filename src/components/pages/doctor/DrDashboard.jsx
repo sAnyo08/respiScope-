@@ -1,12 +1,16 @@
 "use client"
 
-import { useState, useContext } from "react"
+import { useState, useContext, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import PatientCard from "../../utils/PatientCard" // ✅ import the reusable card
 import { Home, Mic, User, Users, Clock, LogOut, Activity, UserCheck, Calendar, Stethoscope, UserPlus ,UserPen, ClipboardClock, CalendarCheck } from "lucide-react"
 import { Button } from "../../ui/Button"
 import { Card, CardContent, CardTitle, CardHeader } from "../../ui/Card"
 import { AuthContext } from "../../../context/authContext"
+import { getPatients } from "../../../services/api/patientService.js"
+import DoctorProfile from "../../../components/utils/doctorProfile"
+import Navbar from "../../utils/Navbar"
+
 
 const DoctorDashboard = () => {
   const { user, login } = useContext(AuthContext);
@@ -30,42 +34,32 @@ const DoctorDashboard = () => {
     { title: "Experience", value: "12", subtitle: "Years of practice", icon: <CalendarCheck /> },
   ]
 
-  const patients = [
-    { id: 1, name: "John Smith", age: 45, gender: "Male", lastVisit: "2024-01-15", condition: "Hypertension", status: "Active" },
-    { id: 2, name: "Sarah Johnson", age: 32, gender: "Female", lastVisit: "2024-01-14", condition: "Asthma", status: "Active" },
-    { id: 3, name: "Michael Brown", age: 58, gender: "Male", lastVisit: "2024-01-13", condition: "Diabetes", status: "Follow-up" },
-    { id: 4, name: "Emily Davis", age: 28, gender: "Female", lastVisit: "2024-01-12", condition: "Migraine", status: "Active" },
-  ]
+  // const patients = [
+  //   { id: 1, name: "John Smith", age: 45, gender: "Male", lastVisit: "2024-01-15", condition: "Hypertension", status: "Active" },
+  //   { id: 2, name: "Sarah Johnson", age: 32, gender: "Female", lastVisit: "2024-01-14", condition: "Asthma", status: "Active" },
+  //   { id: 3, name: "Michael Brown", age: 58, gender: "Male", lastVisit: "2024-01-13", condition: "Diabetes", status: "Follow-up" },
+  //   { id: 4, name: "Emily Davis", age: 28, gender: "Female", lastVisit: "2024-01-12", condition: "Migraine", status: "Active" },
+  // ]
+
+  const [patients, setPatients] = useState([]);
+
+  useEffect(() => {
+    const fetchPatients = async () => {
+      try {
+        const data = await getPatients();
+        setPatients(data);
+      } catch (error) {
+        console.error("Failed to load patients", error);
+      }
+    };
+
+    fetchPatients();
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-mint-300 to-mint-400">
       {/* Header */}
-      <header className="bg-mint-600 shadow-md border-b border-mint-700">
-        <div className="max-w-7xl mx-auto px-6 flex justify-between items-center h-16">
-        <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <div className="w-10 h-10 bg-teal-600 rounded-full flex items-center justify-center">
-                  <span className="text-white font-bold text-lg"><Stethoscope /></span>
-                </div>
-              </div>
-              <div className="ml-4">
-                <h1 className="text-xl font-semibold text-gray-900">RespiScope</h1>
-                <p className="text-sm text-gray-500">Doctor Portal</p>
-              </div>
-            </div>
-          <div className="flex items-center space-x-4">
-            <div className="text-right">
-              <p className="text-sm font-semibold text-mint-50">Dr. Sanyo</p>
-              <p className="text-xs text-mint-200">Code: DOC579789</p>
-            </div>
-            <Button variant="ghost" size="sm" onClick={handleLogout} className="flex items-center space-x-1">
-              <LogOut className="h-4 w-4" />
-              <span>Logout</span>
-            </Button>
-
-          </div>
-        </div>
-      </header>
+      <Navbar />
 
       {/* Navigation Tabs */}
       {/* <nav className="bg-mint-500 border-b border-mint-700 shadow-sm">
@@ -167,10 +161,7 @@ const DoctorDashboard = () => {
         )}
 
         {activeTab === "Profile" && (
-          <div className="bg-mint-500 rounded-2xl shadow-lg border border-mint-700 p-6 hover:shadow-xl transition-shadow">
-            <h2 className="text-xl font-semibold text-mint-50 mb-4">Profile</h2>
-            <p className="text-mint-200">Profile settings coming soon...</p>
-          </div>
+          <DoctorProfile />
         )}
       </main>
     </div>

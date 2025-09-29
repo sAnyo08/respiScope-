@@ -38,6 +38,7 @@ const mongoose = require("mongoose");
 const DoctorSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true }, // link to User
   name: { type: String, trim: true },
+  phone: { type: String, required: true, unique: true }, // unique login field
   degree: { type: String },
   experience: { type: String },
   address: { type: String },

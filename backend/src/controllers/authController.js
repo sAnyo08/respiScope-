@@ -12,7 +12,7 @@ const {
 const getUser = (role) => {
   if (role === "doctor") return Doctor;
   if (role === "patient") return Patient;
-  throw new Error("Invalid role");
+  throw new Error("Invalid role write in smallcase");
 };
 
 // Register
@@ -21,7 +21,7 @@ exports.register = async (req, res) => {
     const role = req.role || req.params.role || req.body.role;
     // const User = getUser(role);
     if (!["doctor", "patient"].includes(role)) {
-      return res.status(400).json({ message: "Invalid role" });
+      return res.status(400).json({ message: "Invalid role, write in smallcase" });
     }
 
     const { name, phone, password, ...rest } = req.body;
@@ -35,10 +35,10 @@ exports.register = async (req, res) => {
     await user.save();
     // Create role-specific profile
     if (role === "doctor") {
-      const doctorProfile = new Doctor({ userId: user._id, ...rest });
+      const doctorProfile = new Doctor({ userId: user._id, name, phone, ...rest });
       await doctorProfile.save();
     } else if (role === "patient") {
-      const patientProfile = new Patient({ userId: user._id, ...rest });
+      const patientProfile = new Patient({ userId: user._id, name, phone, ...rest });
       await patientProfile.save();
     }
 

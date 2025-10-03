@@ -4,6 +4,8 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const cookieParser = require('cookie-parser');
 require('dotenv').config();
+const messageRoutes = require("./routes/messageRoutes");
+const consultationRoutes = require("./routes/consultationRoutes");
 
 // ✅ Unified routes
 const authRoutes = require("./routes/authRoutes");
@@ -40,6 +42,9 @@ app.use("/api/doctors", doctorRoutes);
 // app.use('/api/profile', authRoutes);
 
 app.get('/api/health', (req, res) => res.json({ ok: true }));
+
+app.use("/api/consultations", consultationRoutes);
+app.use("/message", messageRoutes);
 
 // Error handler
 app.use((err, req, res, next) => {

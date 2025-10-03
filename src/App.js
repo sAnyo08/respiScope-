@@ -6,6 +6,7 @@ import DoctorDashboard from "./components/pages/doctor/DrDashboard";
 import PatientDashboard from "./components/pages/patient/PtDashboard";
 import DrPatients from "./components/pages/doctor/DrPatients";
 import ProtectedRoute from "./components/common/protectedRoute";
+import SendMessagePage from "./components/pages/sendMessagePage";
 import { AuthProvider } from "./context/authContext";
 
 function App() {
@@ -17,6 +18,17 @@ function App() {
           <Route path="/" element={<Landing />} />
           <Route path="/doctor-login" element={<DoctorAuthPage />} />
           <Route path="/patient-login" element={<PatientAuthPage />} />
+          <Route path="/sendMsg" element={<SendMessagePage />} />
+
+          {/* Messaging Route */}
+          <Route
+            path="/message/:consultationId"
+            element={
+              <ProtectedRoute requiredRole="patient">
+                <SendMessagePage />
+              </ProtectedRoute>
+            }
+          />
 
           {/* Doctor Protected */}
           <Route

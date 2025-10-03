@@ -13,7 +13,7 @@ import { getDoctors } from "../../../services/api/doctorService"
 import { DoctorCard } from "../../utils/DoctorCard"
 import PatientProfile from "../../utils/PatientProfile"
 import Navbar from "../../utils/Navbar"
-
+import { createConsultation } from "../../../services/api/consultationService"
 
 const PatientDashboard = () => {
   const [activeTab, setActiveTab] = useState("Home")
@@ -48,6 +48,16 @@ const PatientDashboard = () => {
 
     fetchDoctors();
   }, []);
+
+  // Handle Consult Now button click
+  const handleConsult = async (doctorId) => {
+    try {
+      const consultation = await createConsultation(doctorId);
+      navigate(`/message/${consultation._id}`, { state: { doctorId } });
+    } catch (error) {
+      console.error("Failed to initiate consultation", error);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-mint-300 to-mint-400">
@@ -130,7 +140,7 @@ const PatientDashboard = () => {
           {/* Patients Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {doctors.map((doctor) => (
-                <DoctorCard key={doctor.id} doctor={doctor} />
+                <DoctorCard key={doctor._id} doctor={doctor} onConsult={handleConsult} />
               ))}
           </div>
         </div>

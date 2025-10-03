@@ -36,6 +36,7 @@
 const mongoose = require("mongoose");
 
 const DoctorSchema = new mongoose.Schema({
+  doctorId: { type: String, unique: true }, // custom doctor ID
   userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true }, // link to User
   name: { type: String, trim: true },
   phone: { type: String, required: true, unique: true }, // unique login field
@@ -44,5 +45,14 @@ const DoctorSchema = new mongoose.Schema({
   address: { type: String },
   hospital: { type: String }
 }, { timestamps: true });
+
+// Auto-generate doctorId before saving
+DoctorSchema.pre("save", async function (next) {
+  if (!this.doctorId) {
+    const count = await mongoose.model("Doctor").countDocuments();
+    this.doctorId = "DOC" + String(count + 1).padStart(5, "0"); // D-00001 format
+  }
+  next();
+});
 
 module.exports = mongoose.model("Doctor", DoctorSchema);

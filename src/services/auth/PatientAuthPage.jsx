@@ -152,6 +152,8 @@ const PatientAuthPage = () => {
         return;
       }
 
+      localStorage.setItem("token", data.accessToken);
+
       if (isLogin) {
         localStorage.setItem("accessToken", data.accessToken);
         localStorage.setItem("refreshToken", data.refreshToken);

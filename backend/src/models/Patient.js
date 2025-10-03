@@ -38,6 +38,7 @@
 const mongoose = require("mongoose");
 
 const PatientSchema = new mongoose.Schema({
+  patientId: { type: String, unique: true }, // custom patient ID
   userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true }, // link to User
   name: { type: String, trim: true },
   phone: { type: String, required: true, unique: true }, // unique login field
@@ -48,5 +49,14 @@ const PatientSchema = new mongoose.Schema({
   weight: { type: Number },
   priorDisease: { type: String }
 }, { timestamps: true });
+
+// Auto-generate patientId before saving
+PatientSchema.pre("save", async function (next) {
+  if (!this.patientId) {
+    const count = await mongoose.model("Patient").countDocuments();
+    this.patientId = "PAT" + String(count + 1).padStart(5, "0"); // P-00001 format
+  }
+  next();
+});
 
 module.exports = mongoose.model("Patient", PatientSchema);

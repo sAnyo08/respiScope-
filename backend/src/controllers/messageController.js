@@ -28,6 +28,8 @@ exports.sendFileMessage = async (req, res) => {
     const message = new Message({
       consultationId,
       senderRole,
+      senderId,
+      receiverId,
       messageType, // "audio" or "file"
       fileId: req.file.id,
     });
@@ -39,12 +41,30 @@ exports.sendFileMessage = async (req, res) => {
 };
 
 // Fetch all messages in a consultation
-exports.getMessages = async (req, res) => {
+// exports.getMessages = async (req, res) => {
+//   try {
+//     const messages = await Message.find({
+//       userId: req.params.userId,
+//     }).sort("createdAt");
+//     res.json(messages);
+//   } catch (err) {
+//     res.status(500).json({ error: err.message });
+//   }
+// };
+
+// Fetch all messages in a consultation
+exports.getConsultationMessages = async (req, res) => {
   try {
-    const messages = await Message.find({
-      consultationId: req.params.consultationId,
-    }).sort("createdAt");
-    res.json(messages);
+    const { consultationId } = req.params;
+
+    const messages = await Message.find({ consultationId })
+      .sort({ createdAt: 1 }); // oldest → newest
+
+    res.status(200).json({
+      consultationId,
+      totalMessages: messages.length,
+      messages,
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

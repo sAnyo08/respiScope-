@@ -103,6 +103,7 @@ import { Mail, Lock, Eye, EyeOff, User, UserPlus } from 'lucide-react';
 import { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../context/authContext';
+import { loginPatient, registerPatient } from './authService'; // ✅ Import auth service
 
 const API_URL = "http://localhost:5000/api/auth";
 
@@ -157,6 +158,9 @@ const PatientAuthPage = () => {
       if (isLogin) {
         localStorage.setItem("accessToken", data.accessToken);
         localStorage.setItem("refreshToken", data.refreshToken);
+
+        localStorage.setItem("role", data.role); // 🔥 MUST be lowercase
+
         login(data.patient, "patient");
         navigate("/patient-dashboard");
         setMessage("Login successful!");
@@ -167,6 +171,32 @@ const PatientAuthPage = () => {
     } catch (err) {
       setMessage("Error: " + err.message);
     }
+
+
+
+    // try {
+    //   if (isLogin) {
+    //     // ✅ Use authService for login
+    //     const result = await loginPatient({
+    //       phone: formData.phone,
+    //       password: formData.password
+    //     });
+
+    //     login(result.user, "patient"); // ✅ Use result.user
+    //     navigate("/patient-dashboard");
+    //     setMessage("Login successful!");
+    //   } else {
+    //     // ✅ Use authService for registration
+    //     await registerPatient({
+    //       ...formData,
+    //       role: "patient" // ✅ Add role
+    //     });
+    //     setMessage("Registration successful! You can now login.");
+    //     setIsLogin(true);
+    //   }
+    // } catch (err) {
+    //   setMessage("Error: " + err.message);
+    // }
   };
 
   return (
@@ -255,72 +285,72 @@ const PatientAuthPage = () => {
                 </div>
               </div>
               <div className="flex flex-row space-x-2">
-              <div className="mb-4">
-                <label className="block text-emerald-700 text-sm font-bold mb-2" htmlFor="gender">
-                  Gender
-                </label>
-                <div className="relative">
-                  <input
-                    id="gender"
-                    name="gender"
-                    type="text"
-                    placeholder="Gender"
-                    value={formData.gender}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 rounded-lg bg-white border border-emerald-300 focus:outline-none focus:border-emerald-500"
-                  />
+                <div className="mb-4">
+                  <label className="block text-emerald-700 text-sm font-bold mb-2" htmlFor="gender">
+                    Gender
+                  </label>
+                  <div className="relative">
+                    <input
+                      id="gender"
+                      name="gender"
+                      type="text"
+                      placeholder="Gender"
+                      value={formData.gender}
+                      onChange={handleChange}
+                      className="w-full px-4 py-3 rounded-lg bg-white border border-emerald-300 focus:outline-none focus:border-emerald-500"
+                    />
+                  </div>
                 </div>
-              </div>
-              <div className="mb-4">
-                <label className="block text-emerald-700 text-sm font-bold mb-2" htmlFor="address">
-                  Address
-                </label>
-                <div className="relative">
-                  <input
-                    id="address"
-                    name="address"
-                    type="text"
-                    placeholder="Address"
-                    value={formData.address}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 rounded-lg bg-white border border-emerald-300 focus:outline-none focus:border-emerald-500"
-                  />
+                <div className="mb-4">
+                  <label className="block text-emerald-700 text-sm font-bold mb-2" htmlFor="address">
+                    Address
+                  </label>
+                  <div className="relative">
+                    <input
+                      id="address"
+                      name="address"
+                      type="text"
+                      placeholder="Address"
+                      value={formData.address}
+                      onChange={handleChange}
+                      className="w-full px-4 py-3 rounded-lg bg-white border border-emerald-300 focus:outline-none focus:border-emerald-500"
+                    />
+                  </div>
                 </div>
-              </div>
               </div>
               <div className="flex flex-row space-x-2">
-              <div className="mb-4">
-                <label className="block text-emerald-700 text-sm font-bold mb-2" htmlFor="height">
-                  Height
-                </label>
-                <div className="relative">
-                  <input
-                    id="height"
-                    name="height"
-                    type="number"
-                    placeholder="Height"
-                    value={formData.height}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 rounded-lg bg-white border border-emerald-300 focus:outline-none focus:border-emerald-500"
-                  />
+                <div className="mb-4">
+                  <label className="block text-emerald-700 text-sm font-bold mb-2" htmlFor="height">
+                    Height
+                  </label>
+                  <div className="relative">
+                    <input
+                      id="height"
+                      name="height"
+                      type="number"
+                      placeholder="Height"
+                      value={formData.height}
+                      onChange={handleChange}
+                      className="w-full px-4 py-3 rounded-lg bg-white border border-emerald-300 focus:outline-none focus:border-emerald-500"
+                    />
+                  </div>
                 </div>
-              </div>
-              <div className="mb-4">
-                <label className="block text-emerald-700 text-sm font-bold mb-2" htmlFor="weight">
-                  Weight
-                </label>
-                <div className="relative">
-                  <input
-                    id="weight"
-                    name="weight"
-                    type="number"
-                    placeholder="Weight"
-                    value={formData.weight}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 rounded-lg bg-white border border-emerald-300 focus:outline-none focus:border-emerald-500"
-                  />
+                <div className="mb-4">
+                  <label className="block text-emerald-700 text-sm font-bold mb-2" htmlFor="weight">
+                    Weight
+                  </label>
+                  <div className="relative">
+                    <input
+                      id="weight"
+                      name="weight"
+                      type="number"
+                      placeholder="Weight"
+                      value={formData.weight}
+                      onChange={handleChange}
+                      className="w-full px-4 py-3 rounded-lg bg-white border border-emerald-300 focus:outline-none focus:border-emerald-500"
+                    />
+                  </div>
                 </div>
-              </div>
               </div>
               <div className="mb-4">
                 <label className="block text-emerald-700 text-sm font-bold mb-2" htmlFor="priorDisease">

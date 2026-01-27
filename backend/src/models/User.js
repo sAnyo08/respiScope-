@@ -5,7 +5,7 @@ const UserSchema = new mongoose.Schema({
   name: { type: String, required: true, trim: true },
   phone: { type: String, required: true, unique: true }, // unique login field
   password: { type: String, required: true },
-  role: { type: String, enum: ["doctor", "patient"], required: true }, // user type
+  role: { type: String, enum: ["doctor", "patient"], required: true }, // ✅ Add this
   refreshToken: { type: String }
 }, { timestamps: true });
 

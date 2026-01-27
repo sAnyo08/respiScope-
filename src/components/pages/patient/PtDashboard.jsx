@@ -13,7 +13,7 @@ import { getDoctors } from "../../../services/api/doctorService"
 import { DoctorCard } from "../../utils/DoctorCard"
 import PatientProfile from "../../utils/PatientProfile"
 import Navbar from "../../utils/Navbar"
-import { createConsultation } from "../../../services/api/consultationService"
+import { createConsultation, getPatientConsultations } from "../../../services/api/consultationService"
 
 const PatientDashboard = () => {
   const [activeTab, setActiveTab] = useState("Home")
@@ -29,12 +29,8 @@ const PatientDashboard = () => {
     { name: "History", icon: <Clock className="w-4 h-4" /> },
   ]
 
-  // const patients = [
-  //   { id: 1, name: "Arjun Mehta", age: 32, gender: "Male", lastVisit: "2024-07-10", condition: "Asthma", status: "Active" },
-  //   { id: 2, name: "Priya Sharma", age: 27, gender: "Female", lastVisit: "2024-06-18", condition: "Diabetes", status: "Follow-up" },
-  // ]
-
   const [doctors, setDoctors] = useState([]);
+  const [consultations, setConsultations] = useState([]);
 
   useEffect(() => {
     const fetchDoctors = async () => {
@@ -49,13 +45,50 @@ const PatientDashboard = () => {
     fetchDoctors();
   }, []);
 
+  useEffect(() => {
+    const fetchConsultations = async () => {
+      try {
+        const data = await getPatientConsultations();
+        setConsultations(data);
+      } catch (error) {
+        console.error("Failed to load patients", error);
+      }
+    };
+
+    fetchConsultations();
+  }, []);
+
   // Handle Consult Now button click
   const handleConsult = async (doctorId) => {
+    const role = localStorage.getItem("role");
+
+    console.log("ROLE:", role);
+
+    if (!role) {
+      alert("Session expired. Please login again.");
+      navigate("/login");
+      return;
+    }
+
+    if (role !== "patient") {
+      alert("Only patients can start a consultation");
+      return;
+    }
+
     try {
+      // ✅ Add debug logging
+      console.log("Attempting to create consultation for doctor:", doctorId);
+
+
       const consultation = await createConsultation(doctorId);
+      console.log("Consultation created successfully:", consultation);
+
       navigate(`/message/${consultation._id}`, { state: { doctorId } });
+
     } catch (error) {
       console.error("Failed to initiate consultation", error);
+      // ✅ Add user-friendly error message
+      alert(`Failed to create consultation: ${error.message}`);
     }
   };
 
@@ -131,19 +164,30 @@ const PatientDashboard = () => {
           <PatientProfile />
         )}
 
-        {activeTab === "History" && <History />}
+        {activeTab === "History" &&
+          <>
+            <Button className="w-full">
+              Consult Now
+            </Button>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {consultations.map((consultation) => (
+                <DoctorCard key={consultation._id} doctor={consultation} />
+              ))}
+            </div>
+          </>
+        }
 
         {activeTab === "Doctors" && (
           <div className="bg-mint-500 rounded-2xl shadow-lg border border-mint-700 p-6 hover:shadow-xl transition-shadow">
-          <h2 className="text-xl font-semibold text-mint-50 mb-6">Doctors</h2>
+            <h2 className="text-xl font-semibold text-mint-50 mb-6">Doctors</h2>
 
-          {/* Patients Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {doctors.map((doctor) => (
+            {/* Patients Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {doctors.map((doctor) => (
                 <DoctorCard key={doctor._id} doctor={doctor} onConsult={handleConsult} />
               ))}
+            </div>
           </div>
-        </div>
         )}
       </main>
     </div>

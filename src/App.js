@@ -8,6 +8,7 @@ import DrPatients from "./components/pages/doctor/DrPatients";
 import ProtectedRoute from "./components/common/protectedRoute";
 import SendMessagePage from "./components/pages/sendMessagePage";
 import { AuthProvider } from "./context/authContext";
+import DoctorPatientChat from "./components/pages/ChatMessage";
 
 function App() {
   return (
@@ -19,6 +20,7 @@ function App() {
           <Route path="/doctor-login" element={<DoctorAuthPage />} />
           <Route path="/patient-login" element={<PatientAuthPage />} />
           <Route path="/sendMsg" element={<SendMessagePage />} />
+          <Route path="/patients/chat" element={<DoctorPatientChat />} />
 
           {/* Messaging Route */}
           <Route

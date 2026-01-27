@@ -8,6 +8,7 @@ import { Button } from "../../ui/Button"
 import { Card, CardContent, CardTitle, CardHeader } from "../../ui/Card"
 import { AuthContext } from "../../../context/authContext"
 import { getPatients } from "../../../services/api/patientService.js"
+import { getAllConsultationsMessages } from "../../../services/api/consultationService.js"
 import DoctorProfile from "../../../components/utils/doctorProfile"
 import Navbar from "../../utils/Navbar"
 
@@ -42,6 +43,7 @@ const DoctorDashboard = () => {
   // ]
 
   const [patients, setPatients] = useState([]);
+  const [consultations, setConsultations] = useState([]);
 
   useEffect(() => {
     const fetchPatients = async () => {
@@ -54,6 +56,19 @@ const DoctorDashboard = () => {
     };
 
     fetchPatients();
+  }, []);
+
+  useEffect(() => {
+    const fetchConsultations = async () => {
+      try {
+        const data = await getAllConsultationsMessages()
+        setConsultations(data);
+      } catch (error) {
+        console.error("Failed to load messages", error);
+      }
+    };
+
+    fetchConsultations();
   }, []);
 
   return (
@@ -143,7 +158,12 @@ const DoctorDashboard = () => {
         {activeTab === "Consultations" && (
           <div className="bg-green-100 rounded-2xl shadow-lg border border-mint-700 p-6 hover:shadow-xl transition-shadow">
             <h2 className="text-xl font-semibold text-mint-50 mb-4">Consultations</h2>
-            <p className="text-mint-200">Consultation management coming soon...</p>
+            {/* Consultation History Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {consultations.map((consultation) => (
+                <PatientCard key={consultation.id} patient={consultation} />
+              ))}
+            </div>
           </div>
         )}
 

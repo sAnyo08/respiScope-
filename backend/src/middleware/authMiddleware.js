@@ -26,20 +26,29 @@ const auth = (allowedRole = null) => async (req, res, next) => {
     }
 
     // Pick model dynamically
-    let Model;
-    switch (payload.role) {
-      case "doctor":
-        Model = Doctor;
-        break;
-      case "patient":
-        Model = Patient;
-        break;
-      default:
-        return res.status(400).json({ message: "Unknown role in token" });
-    }
+    // let Model;
+    // switch (payload.role) {
+    //   case "doctor":
+    //     Model = Doctor;
+    //     break;
+    //   case "patient":
+    //     Model = Patient;
+    //     break;
+    //   default:
+    //     return res.status(400).json({ message: "Unknown role in token" });
+    // }
 
     // Fetch user
-    const user = await Model.findById(payload.id);
+    //const user = await Model.findById(payload.id);
+    let user;
+    if (payload.role === "doctor") {
+      user = await Doctor.findOne({ userId: payload.id });
+    } else if (payload.role === "patient") {
+      user = await Patient.findOne({ userId: payload.id });
+    } else {
+      return res.status(400).json({ message: "Unknown role in token" });
+    }
+
     if (!user) {
       return res.status(401).json({ message: "User not found" });
     }
@@ -47,6 +56,8 @@ const auth = (allowedRole = null) => async (req, res, next) => {
     // Attach to request for downstream use
     req.user = user;
     req.role = payload.role;
+    req.userId = user._id;
+    req.authUserId = payload.id; // ✅ Add User._id for reference
 
     next();
   } catch (err) {

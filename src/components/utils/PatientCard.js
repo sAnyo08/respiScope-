@@ -46,7 +46,7 @@ const PatientCard = ({ patient }) => {
           </div>
         </div>
 
-        <Link to={`/patient/${patient.id}`}>
+        <Link to={`/patients/chat/${patient.userId}`}>
           <Button className="w-full">
             <FileText className="h-4 w-4 mr-2" />
             View Details

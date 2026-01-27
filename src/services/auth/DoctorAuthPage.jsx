@@ -126,6 +126,7 @@ export default function DoctorAuthPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMessage("");
+    
 
     try {
       const url = isLogin ? `${API_URL}/login/doctor` : `${API_URL}/register/doctor`;
@@ -150,7 +151,11 @@ export default function DoctorAuthPage() {
       if (isLogin) {
         localStorage.setItem("accessToken", data.accessToken);
         localStorage.setItem("refreshToken", data.refreshToken);
+        
+        localStorage.setItem("role", data.role); // 🔥 MUST be lowercase
+
         login(data.doctor, "doctor"); // ✅ update context
+        
         navigate("/doctor-dashboard"); // ✅ redirect
         setMessage("Login successful!");
       } else {

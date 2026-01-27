@@ -31,7 +31,7 @@ exports.register = async (req, res) => {
       return res.status(409).json({ message: `${role} already exists` });
     }
 
-    const user = new User({ name, phone, password, ...rest });
+    const user = new User({ name, phone, password, role, ...rest });
     await user.save();
     // Create role-specific profile
     if (role === "doctor") {
@@ -81,7 +81,21 @@ exports.login = async (req, res) => {
         7 * 24 * 60 * 60 * 1000,
     });
 
-    res.json({ accessToken, user: user.toJSON(), role });
+     // ✅ Return the correct user data based on role
+     let userData;
+     if (role === "doctor") {
+       const doctor = await Doctor.findOne({ userId: user._id });
+       userData = doctor;
+     } else {
+       const patient = await Patient.findOne({ userId: user._id });
+       userData = patient;
+     }
+
+     res.json({ 
+      accessToken, 
+      user: userData, 
+      role 
+    });
   } catch (err) {
     console.error("login error:", err);
     res.status(500).json({ message: err.message || "Server error" });

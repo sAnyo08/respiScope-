@@ -9,3 +9,10 @@ export const getDoctors = async () => {
     throw error;
   }
 };
+// --------------------
+// DOCTOR PROFILE
+// --------------------
+export const fetchDoctorProfile = async () => {
+  const res = await api.get("/doctors/profile");
+  return res.data;
+};

@@ -9,3 +9,11 @@ export const getPatients = async () => {
     throw error;
   }
 };
+
+// --------------------
+// PATIENT PROFILE
+// --------------------
+export const fetchPatientProfile = async () => {
+  const res = await api.get("/patients/profile");
+  return res.data;
+};

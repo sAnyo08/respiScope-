@@ -97,8 +97,8 @@ const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
   export const getPatientConsultations = async () => {
     const token = localStorage.getItem("accessToken");
   
-    const response = await axios.get(
-      `${API_BASE}/consultations/patient`,
+    const res = await fetch(
+      "http://localhost:5000/api/consultations/patient",
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -106,14 +106,42 @@ const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
       }
     );
   
-    return response.data;
+    if (!res.ok) throw new Error("Failed to fetch consultations");
+    return res.json();
   };
 
   export const getDoctorConsultations = async () => {
-    const response = await api.get("/consultations/doctor");
-    return response.data;
+    const token = localStorage.getItem("accessToken");
+  
+    const res = await fetch(
+      "http://localhost:5000/api/consultations/doctor",
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+  
+    if (!res.ok) throw new Error("Failed to fetch doctor consultations");
+    return res.json();
   };
   
+  export const getConsultationsMessages = async (consultationId) => {
+    
+    const token = localStorage.getItem("accessToken");
+  
+      const res = await fetch(
+        `http://localhost:5000/message/consultation/${consultationId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+    if (!res.ok) throw new Error("Failed to fetch consultation messages");
+    return res.json();
+  }
   
 
   export const getAllConsultationsMessages = async () => {

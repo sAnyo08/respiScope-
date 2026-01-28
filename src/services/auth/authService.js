@@ -36,8 +36,8 @@ export const logoutPatient = () => api.post('/auth/patient/logout').then(() => {
 });
 
 // Profiles
-export const fetchDoctorProfile = () => api.get('/auth/doctor/me').then(r => r.data);
-export const fetchPatientProfile = () => api.get('/auth/patient/me').then(r => r.data);
+export const fetchDoctorProfile = () => api.get('/auth/doctors/profile').then(r => r.data);
+export const fetchPatientProfile = () => api.get('/auth/patients/profile').then(r => r.data);
 
 export default {
   registerDoctor, loginDoctor, refreshDoctor, logoutDoctor, fetchDoctorProfile,

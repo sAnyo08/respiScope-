@@ -1,86 +1,19 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { Stethoscope, GraduationCap, Building2, Phone, MapPin, Activity, User } from 'lucide-react';
+import {AuthContext} from "../../context/authContext";
 
 const DoctorProfile = () => {
-  const [doctorData, setDoctorData] = useState({
-    "name": "Dr. Adarsh Gupta",
-    "degree" : "MBBS",
-    "experience": "10",
-    "address": "kandivali, Mumbai",
-    "password": "DoctorAdarsh",
-    "hospital": "Oberoi Hospital",
-    "phone": "8369291692"
-  });
-  // const [loading, setLoading] = useState(true);
-  // const [error, setError] = useState(null);
+  const { user, loading } = useContext(AuthContext); 
+  
+  // 🔥 Guard 1: still loading
+  if (loading) {
+    return <div className="p-6">Loading profile...</div>;
+  }
 
-  // const fetchDoctorProfile = async () => {
-  //   try {
-  //     setLoading(true);
-  //     const token = localStorage.getItem('accessToken'); // Your token storage key
-      
-  //     const response = await fetch('/api/profile/doctor', {
-  //       method: 'GET',
-  //       headers: {
-  //         'Authorization': `Bearer ${token}`,
-  //         'Content-Type': 'application/json',
-  //       },
-  //     });
-
-  //     if (!response.ok) {
-  //       throw new Error('Failed to fetch doctor profile');
-  //     }
-
-  //     const data = await response.json();
-  //     setDoctorData(data.user);
-  //     setError(null);
-      
-  //   } catch (err) {
-  //     setError(err.message);
-  //     console.error('Error fetching doctor profile:', err);
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
-
-  // useEffect(() => {
-  //   fetchDoctorProfile();
-  // }, []);
-
-  // if (loading) {
-  //   return (
-  //     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 to-teal-100">
-  //       <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-emerald-600"></div>
-  //     </div>
-  //   );
-  // }
-
-  // if (error) {
-  //   return (
-  //     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 to-teal-100">
-  //       <div className="text-red-600 text-center bg-white p-8 rounded-lg shadow-lg">
-  //         <h2 className="text-2xl font-bold mb-2">Error Loading Profile</h2>
-  //         <p>{error}</p>
-  //         <button 
-  //           // onClick={fetchDoctorProfile}
-  //           className="mt-4 px-4 py-2 bg-emerald-600 text-white rounded hover:bg-emerald-700"
-  //         >
-  //           Retry
-  //         </button>
-  //       </div>
-  //     </div>
-  //   );
-  // }
-
-  // if (!doctorData) {
-  //   return (
-  //     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 to-teal-100">
-  //       <div className="text-gray-600 text-center bg-white p-8 rounded-lg shadow-lg">
-  //         <h2 className="text-2xl font-bold mb-2">No Profile Data Found</h2>
-  //       </div>
-  //     </div>
-  //   );
-  // }
+  // 🔥 Guard 2: no user (token expired / logged out)
+  if (!user) {
+    return <div className="p-6">No profile data found</div>;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-100 p-2">
@@ -92,7 +25,7 @@ const DoctorProfile = () => {
               <Stethoscope className="w-10 h-10 text-white" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-white">{doctorData.name}</h1>
+              <h1 className="text-3xl font-bold text-white">{user.name}</h1>
               <p className="text-emerald-100 text-lg flex items-center">
                 <GraduationCap className="w-4 h-4 mr-2" />
                 Medical Professional
@@ -116,7 +49,8 @@ const DoctorProfile = () => {
                     <GraduationCap className="w-5 h-5 text-emerald-600" />
                     <div>
                       <p className="text-sm text-emerald-700">Degree</p>
-                      <p className="text-emerald-800 font-medium">{doctorData.degree}</p>
+                      <p className="text-emerald-800 font-medium">{user
+      .degree}</p>
                     </div>
                   </div>
                 </div>
@@ -126,7 +60,8 @@ const DoctorProfile = () => {
                     <Activity className="w-5 h-5 text-blue-600" />
                     <div>
                       <p className="text-sm text-blue-700">Experience</p>
-                      <p className="text-blue-800 font-medium">{doctorData.experience} years</p>
+                      <p className="text-blue-800 font-medium">{user
+      .experience} years</p>
                     </div>
                   </div>
                 </div>
@@ -136,7 +71,8 @@ const DoctorProfile = () => {
                     <Building2 className="w-5 h-5 text-purple-600" />
                     <div>
                       <p className="text-sm text-purple-700">Hospital</p>
-                      <p className="text-purple-800 font-medium">{doctorData.hospital}</p>
+                      <p className="text-purple-800 font-medium">{user
+      .hospital}</p>
                     </div>
                   </div>
                 </div>
@@ -155,7 +91,8 @@ const DoctorProfile = () => {
                     <Phone className="w-5 h-5 text-gray-600" />
                     <div>
                       <p className="text-sm text-gray-600">Phone Number</p>
-                      <p className="text-gray-800 font-medium">{doctorData.phone}</p>
+                      <p className="text-gray-800 font-medium">{user
+      .phone}</p>
                     </div>
                   </div>
                 </div>
@@ -165,7 +102,8 @@ const DoctorProfile = () => {
                     <MapPin className="w-5 h-5 text-orange-600" />
                     <div>
                       <p className="text-sm text-orange-700">Address</p>
-                      <p className="text-orange-800 font-medium">{doctorData.address}</p>
+                      <p className="text-orange-800 font-medium">{user
+      .address}</p>
                     </div>
                   </div>
                 </div>
@@ -176,11 +114,13 @@ const DoctorProfile = () => {
                 <h3 className="text-lg font-semibold mb-3">Professional Summary</h3>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="text-center">
-                    <p className="text-2xl font-bold">{doctorData.experience}</p>
+                    <p className="text-2xl font-bold">{user
+    .experience}</p>
                     <p className="text-sm text-emerald-100">Years Experience</p>
                   </div>
                   <div className="text-center">
-                    <p className="text-2xl font-bold">{doctorData.degree}</p>
+                    <p className="text-2xl font-bold">{user
+    .degree}</p>
                     <p className="text-sm text-emerald-100">Qualification</p>
                   </div>
                 </div>

@@ -1,7 +1,10 @@
 const express = require("express");
-const { getDoctors, getDoctorById, createDoctor } = require("../controllers/doctorController.js");
+const { getDoctors, getDoctorById, createDoctor, getDoctorProfile } = require("../controllers/doctorController.js");
+const auth = require("../middleware/authMiddleware.js");
 
 const router = express.Router();
+
+router.get("/profile", auth("doctor"), getDoctorProfile);
 
 // GET all doctors
 router.get("/", getDoctors);

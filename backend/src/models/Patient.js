@@ -38,7 +38,6 @@
 const mongoose = require("mongoose");
 
 const PatientSchema = new mongoose.Schema({
-  patientId: { type: String, unique: true }, // custom patient ID
   userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true }, // link to User
   name: { type: String, trim: true },
   phone: { type: String, required: true, unique: true }, // unique login field

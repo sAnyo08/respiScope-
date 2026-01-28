@@ -54,11 +54,13 @@ exports.sendFileMessage = async (req, res) => {
 
 // Fetch all messages in a consultation
 exports.getConsultationMessages = async (req, res) => {
+
   try {
     const { consultationId } = req.params;
 
-    const messages = await Message.find({ consultationId })
-      .sort({ createdAt: 1 }); // oldest → newest
+    const messages = await Message.find({ consultationId }).sort({
+      createdAt: 1,
+    }); // oldest → newest
 
     res.status(200).json({
       consultationId,

@@ -1,7 +1,11 @@
 const express = require("express");
-const { getPatients, getPatientById, createPatient } = require("../controllers/patientController.js");
+const { getPatients, getPatientById, createPatient, getPatientProfile } = require("../controllers/patientController.js");
+const auth = require("../middleware/authMiddleware.js");
 
 const router = express.Router();
+
+// 🔥 GET logged-in patient profile
+router.get("/profile", auth("patient"), getPatientProfile);
 
 // GET all patients
 router.get("/", getPatients);

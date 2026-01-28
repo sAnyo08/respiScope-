@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
+import { useContext } from "react";
+import { AuthContext } from "../../../context/authContext";
 import PatientCard from "../../utils/PatientCard"
 import { Home, Mic, User, Users, Clock, LogOut, Activity, UserCheck, Calendar, Stethoscope } from "lucide-react"
 import { Button } from "../../ui/Button"
@@ -20,6 +22,7 @@ const PatientDashboard = () => {
   const navigate = useNavigate()
 
   const handleLogout = () => navigate("/")
+  const { role } = useContext(AuthContext);
 
   const tabs = [
     { name: "Home", icon: <Home className="w-4 h-4" /> },
@@ -60,13 +63,12 @@ const PatientDashboard = () => {
 
   // Handle Consult Now button click
   const handleConsult = async (doctorId) => {
-    const role = localStorage.getItem("role");
 
     console.log("ROLE:", role);
 
     if (!role) {
       alert("Session expired. Please login again.");
-      navigate("/login");
+      navigate("/patient-login");
       return;
     }
 
@@ -170,8 +172,17 @@ const PatientDashboard = () => {
               Consult Now
             </Button>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {consultations.map((consultation) => (
-                <DoctorCard key={consultation._id} doctor={consultation} />
+              {consultations.map((c) => (
+                <Card key={c._id}>
+                  <p>Doctor: {c.doctorId?.name}</p>
+                  <p>Status: {c.status}</p>
+
+                  <Button
+                    onClick={() => navigate(`/message/${c._id}`)}
+                  >
+                    Open Chat
+                  </Button>
+                </Card>
               ))}
             </div>
           </>

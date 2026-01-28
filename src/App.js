@@ -26,7 +26,7 @@ function App() {
           <Route
             path="/message/:consultationId"
             element={
-              <ProtectedRoute requiredRole="patient">
+              <ProtectedRoute requiredRole={["patient", "doctor"]}>
                 <SendMessagePage />
               </ProtectedRoute>
             }

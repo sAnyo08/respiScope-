@@ -31,3 +31,17 @@ export const createDoctor = async (req, res) => {
     res.status(400).json({ message: err.message });
   }
 };
+
+export const getDoctorProfile = async (req, res) => {
+  try {
+    const doctor = await Doctor.findById(req.user._id);
+
+    if (!doctor) {
+      return res.status(404).json({ message: "Doctor profile not found" });
+    }
+
+    res.json(doctor);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};

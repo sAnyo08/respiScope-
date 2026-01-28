@@ -1,6 +1,7 @@
 // src/context/AuthContext.jsx
 import React, { createContext, useEffect, useState } from 'react';
-import { fetchDoctorProfile, fetchPatientProfile } from '../services/auth/authService';
+import { fetchDoctorProfile } from '../services/api/doctorService';
+import { fetchPatientProfile } from '../services/api/patientService';
 
 export const AuthContext = createContext();
 
@@ -16,10 +17,12 @@ export function AuthProvider({ children }) {
       try {
         if (role === 'doctor') {
           const res = await fetchDoctorProfile();
-          setUser(res.user ?? res); // adapt to your backend response shape
+          console.log("RAW PROFILE:", res);
+          setUser(res.data ?? res.user ?? res); // adapt to your backend response shape
         } else {
           const res = await fetchPatientProfile();
-          setUser(res.user ?? res);
+          console.log("RAW PROFILE:", res);
+          setUser(res.data ?? res.user ?? res);
         }
       } catch (e) {
         console.error('Profile load failed', e);

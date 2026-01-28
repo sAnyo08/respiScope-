@@ -51,7 +51,7 @@ app.use("/message", messageRoutes);
 
 // Error handler
 app.use((err, req, res, next) => {
-  console.error(err);
+  console.error(err.message);
   const status = err.status || 500;
   res.status(status).json({ message: err.message || 'Server Error' });
 });

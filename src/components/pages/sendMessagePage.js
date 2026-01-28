@@ -27,7 +27,7 @@ const SendMessagePage = () => {
         setMessages(data);
       } catch (err) {
         setError("Failed to load messages");
-        console.error(err);
+        console.error(err.message);
       }
     };
     if (consultationId) {
@@ -67,7 +67,7 @@ const SendMessagePage = () => {
       setError(null);
     } catch (err) {
       setError("Failed to send message");
-      console.error(err);
+      console.error(err.message);
     }
   };
 

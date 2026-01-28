@@ -45,6 +45,11 @@ exports.register = async (req, res) => {
 
     res.status(201).json({ message: `${role} registered successfully` });
   } catch (err) {
+    // 🔥 ROLLBACK user if profile creation failed
+    if (user?._id) {
+      await User.findByIdAndDelete(user._id);
+    }
+    
     console.error("register error:", err);
     res.status(500).json({ message: err.message || "Server error" });
   }

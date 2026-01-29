@@ -1,12 +1,13 @@
 import { Link } from "react-router-dom"
 import { Button } from "../ui/Button"
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/Card"
+import Navbar from "../utils/Navbar"
 
 const Landing = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
       {/* Header */}
-      <header className="bg-white/80 backdrop-blur-md shadow-sm border-b sticky top-0 z-50 animate-[slideDown_0.5s_ease-out]">
+      {/* <header className="bg-white/80 backdrop-blur-md shadow-sm border-b sticky top-0 z-50 animate-[slideDown_0.5s_ease-out]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3 group">
@@ -24,17 +25,22 @@ const Landing = () => {
             </div>
           </div>
         </div>
-      </header>
+      </header> */}
+      <Navbar userType="landing" userName="" userCode="" />
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="text-center mb-16 animate-[fadeIn_0.8s_ease-out]">
           <h2 className="text-5xl font-bold text-gray-900 mb-4 animate-[slideUp_0.6s_ease-out]">
-            Welcome to <span className="bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent">RespiScope Portal</span>
+            Welcome to{" "}
+            <span className="bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent">
+              RespiScope Portal
+            </span>
           </h2>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto animate-[slideUp_0.8s_ease-out]">
-            Your comprehensive healthcare management system. Access patient records, medical history, and AI-powered
-            diagnostics all in one secure platform.
+            Your comprehensive healthcare management system. Access patient
+            records, medical history, and AI-powered diagnostics all in one
+            secure platform.
           </p>
         </div>
 
@@ -45,7 +51,12 @@ const Landing = () => {
             <div className="absolute inset-0 bg-gradient-to-br from-green-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
             <CardHeader className="text-center pb-4 relative z-10">
               <div className="w-16 h-16 bg-gradient-to-br from-green-100 to-green-200 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 group-hover:rotate-6 transition-all duration-500 shadow-lg">
-                <svg className="w-8 h-8 text-green-600 group-hover:scale-110 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg
+                  className="w-8 h-8 text-green-600 group-hover:scale-110 transition-transform duration-300"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -54,16 +65,22 @@ const Landing = () => {
                   />
                 </svg>
               </div>
-              <CardTitle className="text-2xl text-green-700 group-hover:text-green-800 transition-colors duration-300">Healthcare Provider</CardTitle>
+              <CardTitle className="text-2xl text-green-700 group-hover:text-green-800 transition-colors duration-300">
+                Healthcare Provider
+              </CardTitle>
             </CardHeader>
             <CardContent className="text-center relative z-10">
               <p className="text-gray-600 mb-6 group-hover:text-gray-700 transition-colors duration-300">
-                Access patient records, update medical information, and utilize AI diagnostic tools to provide the best
-                care for your patients.
+                Access patient records, update medical information, and utilize
+                AI diagnostic tools to provide the best care for your patients.
               </p>
               <div className="space-y-3 mb-6">
                 <div className="flex items-center text-sm text-gray-500 group-hover:translate-x-2 transition-transform duration-300">
-                  <svg className="w-4 h-4 mr-2 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                  <svg
+                    className="w-4 h-4 mr-2 text-green-500"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
                     <path
                       fillRule="evenodd"
                       d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
@@ -73,7 +90,11 @@ const Landing = () => {
                   Full patient record access
                 </div>
                 <div className="flex items-center text-sm text-gray-500 group-hover:translate-x-2 transition-transform duration-300 delay-75">
-                  <svg className="w-4 h-4 mr-2 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                  <svg
+                    className="w-4 h-4 mr-2 text-green-500"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
                     <path
                       fillRule="evenodd"
                       d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
@@ -83,7 +104,11 @@ const Landing = () => {
                   AI-powered diagnostics
                 </div>
                 <div className="flex items-center text-sm text-gray-500 group-hover:translate-x-2 transition-transform duration-300 delay-150">
-                  <svg className="w-4 h-4 mr-2 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                  <svg
+                    className="w-4 h-4 mr-2 text-green-500"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
                     <path
                       fillRule="evenodd"
                       d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
@@ -106,7 +131,12 @@ const Landing = () => {
             <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
             <CardHeader className="text-center pb-4 relative z-10">
               <div className="w-16 h-16 bg-gradient-to-br from-blue-100 to-blue-200 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 group-hover:rotate-6 transition-all duration-500 shadow-lg">
-                <svg className="w-8 h-8 text-blue-600 group-hover:scale-110 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg
+                  className="w-8 h-8 text-blue-600 group-hover:scale-110 transition-transform duration-300"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -115,16 +145,23 @@ const Landing = () => {
                   />
                 </svg>
               </div>
-              <CardTitle className="text-2xl text-blue-700 group-hover:text-blue-800 transition-colors duration-300">Patient</CardTitle>
+              <CardTitle className="text-2xl text-blue-700 group-hover:text-blue-800 transition-colors duration-300">
+                Patient
+              </CardTitle>
             </CardHeader>
             <CardContent className="text-center relative z-10">
               <p className="text-gray-600 mb-6 group-hover:text-gray-700 transition-colors duration-300">
-                View your medical records, track your health progress, and access your diagnostic reports in a secure,
-                easy-to-use interface.
+                View your medical records, track your health progress, and
+                access your diagnostic reports in a secure, easy-to-use
+                interface.
               </p>
               <div className="space-y-3 mb-6">
                 <div className="flex items-center text-sm text-gray-500 group-hover:translate-x-2 transition-transform duration-300">
-                  <svg className="w-4 h-4 mr-2 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+                  <svg
+                    className="w-4 h-4 mr-2 text-blue-500"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
                     <path
                       fillRule="evenodd"
                       d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
@@ -134,7 +171,11 @@ const Landing = () => {
                   Personal health records
                 </div>
                 <div className="flex items-center text-sm text-gray-500 group-hover:translate-x-2 transition-transform duration-300 delay-75">
-                  <svg className="w-4 h-4 mr-2 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+                  <svg
+                    className="w-4 h-4 mr-2 text-blue-500"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
                     <path
                       fillRule="evenodd"
                       d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
@@ -144,7 +185,11 @@ const Landing = () => {
                   Test results & reports
                 </div>
                 <div className="flex items-center text-sm text-gray-500 group-hover:translate-x-2 transition-transform duration-300 delay-150">
-                  <svg className="w-4 h-4 mr-2 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+                  <svg
+                    className="w-4 h-4 mr-2 text-blue-500"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
                     <path
                       fillRule="evenodd"
                       d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
@@ -165,11 +210,18 @@ const Landing = () => {
 
         {/* Features Section */}
         <div className="mt-20 text-center animate-[fadeIn_1s_ease-out]">
-          <h3 className="text-3xl font-bold text-gray-900 mb-8">Why Choose RespiScope Portal?</h3>
+          <h3 className="text-3xl font-bold text-gray-900 mb-8">
+            Why Choose RespiScope Portal?
+          </h3>
           <div className="grid md:grid-cols-3 gap-8">
             <div className="flex flex-col items-center group animate-[fadeIn_1.2s_ease-out] hover:-translate-y-2 transition-transform duration-300">
               <div className="w-14 h-14 bg-gradient-to-br from-purple-100 to-purple-200 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 group-hover:rotate-6 transition-all duration-500 shadow-lg">
-                <svg className="w-7 h-7 text-purple-600 group-hover:scale-110 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg
+                  className="w-7 h-7 text-purple-600 group-hover:scale-110 transition-transform duration-300"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -178,21 +230,46 @@ const Landing = () => {
                   />
                 </svg>
               </div>
-              <h4 className="text-lg font-semibold text-gray-900 mb-2 group-hover:text-purple-700 transition-colors duration-300">Secure & Private</h4>
-              <p className="text-gray-600 group-hover:text-gray-700 transition-colors duration-300">HIPAA-compliant security ensures your medical data stays protected</p>
+              <h4 className="text-lg font-semibold text-gray-900 mb-2 group-hover:text-purple-700 transition-colors duration-300">
+                Secure & Private
+              </h4>
+              <p className="text-gray-600 group-hover:text-gray-700 transition-colors duration-300">
+                HIPAA-compliant security ensures your medical data stays
+                protected
+              </p>
             </div>
             <div className="flex flex-col items-center group animate-[fadeIn_1.4s_ease-out] hover:-translate-y-2 transition-transform duration-300">
               <div className="w-14 h-14 bg-gradient-to-br from-orange-100 to-orange-200 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 group-hover:rotate-6 transition-all duration-500 shadow-lg">
-                <svg className="w-7 h-7 text-orange-600 group-hover:scale-110 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                <svg
+                  className="w-7 h-7 text-orange-600 group-hover:scale-110 transition-transform duration-300"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M13 10V3L4 14h7v7l9-11h-7z"
+                  />
                 </svg>
               </div>
-              <h4 className="text-lg font-semibold text-gray-900 mb-2 group-hover:text-orange-700 transition-colors duration-300">AI-Powered</h4>
-              <p className="text-gray-600 group-hover:text-gray-700 transition-colors duration-300">Advanced AI diagnostics help healthcare providers make better decisions</p>
+              <h4 className="text-lg font-semibold text-gray-900 mb-2 group-hover:text-orange-700 transition-colors duration-300">
+                AI-Powered
+              </h4>
+              <p className="text-gray-600 group-hover:text-gray-700 transition-colors duration-300">
+                Advanced AI diagnostics help healthcare providers make better
+                decisions
+              </p>
             </div>
             <div className="flex flex-col items-center group animate-[fadeIn_1.6s_ease-out] hover:-translate-y-2 transition-transform duration-300">
               <div className="w-14 h-14 bg-gradient-to-br from-teal-100 to-teal-200 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 group-hover:rotate-6 transition-all duration-500 shadow-lg">
-                <svg className="w-7 h-7 text-teal-600 group-hover:scale-110 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg
+                  className="w-7 h-7 text-teal-600 group-hover:scale-110 transition-transform duration-300"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -201,8 +278,13 @@ const Landing = () => {
                   />
                 </svg>
               </div>
-              <h4 className="text-lg font-semibold text-gray-900 mb-2 group-hover:text-teal-700 transition-colors duration-300">Easy to Use</h4>
-              <p className="text-gray-600 group-hover:text-gray-700 transition-colors duration-300">Intuitive interface designed for both patients and healthcare providers</p>
+              <h4 className="text-lg font-semibold text-gray-900 mb-2 group-hover:text-teal-700 transition-colors duration-300">
+                Easy to Use
+              </h4>
+              <p className="text-gray-600 group-hover:text-gray-700 transition-colors duration-300">
+                Intuitive interface designed for both patients and healthcare
+                providers
+              </p>
             </div>
           </div>
         </div>
@@ -272,7 +354,7 @@ const Landing = () => {
         }
       `}</style>
     </div>
-  )
+  );
 }
 
 export default Landing

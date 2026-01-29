@@ -1,9 +1,9 @@
-const express = require('express');
-const cors = require('cors');
-const helmet = require('helmet');
-const rateLimit = require('express-rate-limit');
-const cookieParser = require('cookie-parser');
-require('dotenv').config();
+const express = require("express");
+const cors = require("cors");
+const helmet = require("helmet");
+const rateLimit = require("express-rate-limit");
+const cookieParser = require("cookie-parser");
+require("dotenv").config();
 const messageRoutes = require("./routes/messageRoutes");
 const consultationRoutes = require("./routes/consultationRoutes");
 
@@ -14,15 +14,13 @@ const doctorRoutes = require("./routes/doctorRoutes");
 // const doctorAuthRoutes = require('./routes/doctorAuth');
 // const patientAuthRoutes = require('./routes/patientAuth');
 
-
 const app = express();
-
 
 // Middleware
 app.use(helmet());
 
-app.use(express.json({limit: '10mb'}))
-app.use(express.urlencoded({extended: true, limit: '10mb'}));
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use(cookieParser());
 
 app.use(
@@ -34,7 +32,7 @@ app.use(
 
 const limiter = rateLimit({
   windowMs: 60 * 1000,
-  max: 80
+  max: 80,
 });
 app.use(limiter);
 
@@ -44,7 +42,7 @@ app.use("/api/patients", patientRoutes);
 app.use("/api/doctors", doctorRoutes);
 // app.use('/api/profile', authRoutes);
 
-app.get('/api/health', (req, res) => res.json({ ok: true }));
+app.get("/api/health", (req, res) => res.json({ ok: true }));
 
 app.use("/api/consultations", consultationRoutes);
 app.use("/message", messageRoutes);
@@ -53,7 +51,7 @@ app.use("/message", messageRoutes);
 app.use((err, req, res, next) => {
   console.error(err.message);
   const status = err.status || 500;
-  res.status(status).json({ message: err.message || 'Server Error' });
+  res.status(status).json({ message: err.message || "Server Error" });
 });
 
 module.exports = app;

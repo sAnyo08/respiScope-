@@ -92,6 +92,18 @@ const DoctorDashboard = () => {
   }
 };
 
+  const onViewDetails = async(patient) => {
+
+  try {
+    navigate(`/patients/${patient._id}`);
+  } catch (error) {
+    console.error("Failed to open patient details", error.message);
+    // ✅ Add user-friendly error message
+    alert(`Failed to open patient details: ${error.message}`);
+  }
+};
+
+
 return (
   <div className="min-h-screen bg-gradient-to-br from-mint-300 to-mint-400">
     {/* Header */}
@@ -202,7 +214,14 @@ return (
           {/* Patients Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {patients.map((patient) => (
-              <PatientCard key={patient.id} patient={patient} />
+              <Card key={patient._id}>
+                <p>Patient: {patient.name}</p>
+                <p>Age: {patient.age}</p>
+
+              <Button onClick={() => onViewDetails(patient)}>
+                View Details
+              </Button>
+            </Card>
             ))}
           </div>
         </div>

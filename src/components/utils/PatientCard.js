@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "../ui/Card"
 import { Button } from "../ui/Button"
 import { User, Calendar, FileText } from "lucide-react"
 
-const PatientCard = ({ patient }) => {
+const PatientCard = ({ patient, onViewDetails }) => {
   return (
     <Card className="hover:shadow-lg transition cursor-pointer">
       <CardHeader className="pb-3">
@@ -46,12 +46,11 @@ const PatientCard = ({ patient }) => {
           </div>
         </div>
 
-        <Link to={`/patients/chat/${patient.userId}`}>
-          <Button className="w-full">
+          <Button className="w-full"
+            onClick={() => onViewDetails(patient._id)}>
             <FileText className="h-4 w-4 mr-2" />
             View Details
           </Button>
-        </Link>
       </CardContent>
     </Card>
   )

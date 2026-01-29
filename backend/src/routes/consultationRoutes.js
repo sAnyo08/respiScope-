@@ -89,5 +89,17 @@ router.get("/:consultationId", auth(), async (req, res) => {
   }
 });
 
+router.get("/:consultationId/participant", auth(), async (req, res) => {
+  const consultation = await Consultation.findById(req.params.consultationId)
+    .populate("doctorId", "name phone")
+    .populate("patientId", "name phone");
+
+  const other =
+    req.role === "patient"
+      ? consultation.doctorId
+      : consultation.patientId;
+
+  res.json(other);
+});
 
 module.exports = router;

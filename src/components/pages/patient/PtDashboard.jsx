@@ -94,6 +94,19 @@ const PatientDashboard = () => {
     }
   };
 
+  const handleOpenChat = async(c) => {
+    console.log("Opening chat for consultation:", c._id);
+
+  try {
+    
+    navigate(`/message/${c._id}`, { state: { consultationId: c._id } });
+  } catch (error) {
+    console.error("Failed to open consultation", error.message);
+    // ✅ Add user-friendly error message
+    alert(`Failed to open consultation: ${error.message}`);
+  }
+};
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-mint-300 to-mint-400">
       {/* Header */}
@@ -167,10 +180,6 @@ const PatientDashboard = () => {
         )}
 
         {activeTab === "History" &&
-          <>
-            <Button className="w-full">
-              Consult Now
-            </Button>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {consultations.map((c) => (
                 <Card key={c._id}>
@@ -178,14 +187,13 @@ const PatientDashboard = () => {
                   <p>Status: {c.status}</p>
 
                   <Button
-                    onClick={() => navigate(`/message/${c._id}`)}
+                    onClick={() => handleOpenChat(c)}
                   >
                     Open Chat
                   </Button>
                 </Card>
-              ))}
+              ))};
             </div>
-          </>
         }
 
         {activeTab === "Doctors" && (

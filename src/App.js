@@ -20,7 +20,7 @@ function App() {
           <Route path="/doctor-login" element={<DoctorAuthPage />} />
           <Route path="/patient-login" element={<PatientAuthPage />} />
           <Route path="/sendMsg" element={<SendMessagePage />} />
-          <Route path="/patients/chat" element={<DoctorPatientChat />} />
+          <Route path="/patients/:patientId" element={<DoctorPatientChat />} />
 
           {/* Messaging Route */}
           <Route

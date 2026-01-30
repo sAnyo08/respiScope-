@@ -6,9 +6,9 @@ const Patient = require("../models/Patient");
 const auth = (allowedRole = null) => async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization || "";
-    const token = authHeader.startsWith("Bearer ")
+    const token = req.cookies?.accessToken || (authHeader.startsWith("Bearer ")
       ? authHeader.slice(7)
-      : null;
+      : null);
 
     if (!token) {
       return res.status(401).json({ message: "No token provided" });

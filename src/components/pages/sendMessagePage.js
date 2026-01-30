@@ -3,6 +3,7 @@ import { useParams, useLocation } from "react-router-dom";
 import { AuthContext } from "../../context/authContext";
 import { Button } from "../ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/Card";
+import AudioWaveform from "../ui/AudioWaveform";
 import Navbar from "../utils/Navbar";
 import { socket } from "../../socket";
 import {
@@ -129,6 +130,8 @@ const SendMessagePage = () => {
     const formData = new FormData();
     formData.append("file", file);
     formData.append("consultationId", consultationId);
+    formData.append("senderRole", role);
+    formData.append("senderId", user._id);
     formData.append("messageType", "audio");
 
     try {
@@ -471,52 +474,28 @@ const SendMessagePage = () => {
                               </p>
                             )}
 
-                            {msg.messageType === "file" && (
-                              <a
-                                href={`http://localhost:5000/message/file/${msg.fileId}`}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="flex items-center gap-3 group"
-                              >
-                                <div
-                                  className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                                    isSender ? "bg-white/20" : "bg-teal-50"
-                                  }`}
-                                >
-                                  <div
-                                    className={
-                                      isSender ? "text-white" : "text-teal-600"
-                                    }
-                                  >
-                                    {getFileIcon(msg.fileName)}
-                                  </div>
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <p
-                                    className={`text-sm font-medium truncate ${
-                                      isSender ? "text-white" : "text-gray-800"
-                                    }`}
-                                  >
-                                    {msg.fileName || "Document"}
-                                  </p>
-                                  <p
-                                    className={`text-xs ${
-                                      isSender
-                                        ? "text-teal-100"
-                                        : "text-gray-500"
-                                    }`}
-                                  >
-                                    {msg.fileSize
-                                      ? formatFileSize(msg.fileSize)
-                                      : "Click to download"}
-                                  </p>
-                                </div>
-                                <Download
-                                  className={`w-4 h-4 ${
-                                    isSender ? "text-white" : "text-teal-600"
-                                  } group-hover:scale-110 transition-transform`}
+                            {msg.messageType === "audio" && (
+                              <div className="w-full space-y-2">
+                                {/* Waveform */}
+                                <AudioWaveform fileId={msg.fileId} />
+
+                                {/* Audio Player */}
+                                <audio
+                                  controls
+                                  preload="metadata"
+                                  className="w-full rounded-md"
+                                  src={`http://localhost:5000/message/file/${msg.fileId}`}
                                 />
-                              </a>
+
+                                {/* Download */}
+                                <a
+                                  href={`http://localhost:5000/message/file/${msg.fileId}`}
+                                  download={msg.fileName || "recording.wav"}
+                                  className="text-xs text-teal-600 hover:underline inline-flex items-center gap-1"
+                                >
+                                  ⬇ Download
+                                </a>
+                              </div>
                             )}
                           </div>
 

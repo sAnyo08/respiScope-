@@ -77,6 +77,12 @@ exports.login = async (req, res) => {
       .digest("hex");
     await user.save();
 
+    res.cookie("accessToken", accessToken, {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+    });
+
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
       sameSite: "lax",

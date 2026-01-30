@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const Message = require("../models/message");
 const { GridFSBucket } = require("mongodb");
+const Consultation = require("../models/Consultation");
 
 // Send text message
 exports.sendTextMessage = async (req, res) => {
@@ -24,23 +25,28 @@ exports.sendTextMessage = async (req, res) => {
 // Send audio/file message
 exports.sendFileMessage = async (req, res) => {
   try {
-    const { consultationId, messageType } = req.body;
+    const { consultationId, senderRole, senderId, messageType } = req.body;
 
-    if (!consultationId) {
-      return res.status(400).json({ error: "consultationId is required" });
+    if (!consultationId || !senderRole || !senderId) {
+      return res.status(400).json({
+        message: "Missing required fields",
+      });
     }
 
-    // 🔑 get logged-in user from auth middleware
-    const senderId = req.user._id;
-    const senderRole = req.role;
+    if (!req.file || !req.file.id) {
+      return res.status(400).json({
+        message: "File upload failed",
+      });
+    }
 
-    // 🔑 fetch consultation
+    // 🔥 Fetch consultation to determine receiver
     const consultation = await Consultation.findById(consultationId);
+
     if (!consultation) {
-      return res.status(404).json({ error: "Consultation not found" });
+      return res.status(404).json({ message: "Consultation not found" });
     }
 
-    // 🔑 determine receiver
+    // 🔥 Auto-resolve receiverId
     const receiverId =
       senderRole === "patient"
         ? consultation.doctorId
@@ -51,18 +57,24 @@ exports.sendFileMessage = async (req, res) => {
       senderRole,
       senderId,
       receiverId,
-      messageType, // "audio" | "file"
+      messageType: messageType || "audio",
       fileId: req.file.id,
+      fileName: req.file.filename,
+      fileSize: req.file.size,
     });
 
     await message.save();
 
-    res.json({ message: "File message sent", data: message });
+    res.status(201).json({
+      message: "File message sent",
+      data: message,
+    });
   } catch (err) {
     console.error("File message error:", err);
     res.status(500).json({ error: err.message });
   }
 };
+
 
 // Fetch all messages in a consultation
 // exports.getMessages = async (req, res) => {

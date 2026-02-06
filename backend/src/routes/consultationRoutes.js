@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const Consultation = require("../models/Consultation");
 const auth = require("../middleware/authMiddleware");
+const getPatientsUnderDoctor = require("../controllers/doctorController.js").getPatientsUnderDoctor;
 
 // Create or fetch a consultation
 router.post("/", auth("patient"), async (req, res) => {
@@ -101,5 +102,11 @@ router.get("/:consultationId/participant", auth(), async (req, res) => {
 
   res.json(other);
 });
+
+router.get(
+  "/doctor/patient/:patientId",
+  auth("doctor"),
+  getPatientsUnderDoctor
+);
 
 module.exports = router;

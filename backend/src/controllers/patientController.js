@@ -13,7 +13,7 @@ export const getPatients = async (req, res) => {
 // GET single patient
 export const getPatientById = async (req, res) => {
   try {
-    const patient = await Patient.findById(req.params.id);
+    const patient = await Patient.findById(req.params.id).select("name age phone email");
     if (!patient) return res.status(404).json({ message: "Patient not found" });
     res.json(patient);
   } catch (err) {

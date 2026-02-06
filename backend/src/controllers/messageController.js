@@ -48,9 +48,7 @@ exports.sendFileMessage = async (req, res) => {
 
     // 🔥 Auto-resolve receiverId
     const receiverId =
-      senderRole === "patient"
-        ? consultation.doctorId
-        : consultation.patientId;
+      senderRole === "patient" ? consultation.doctorId : consultation.patientId;
 
     const message = new Message({
       consultationId,
@@ -75,7 +73,6 @@ exports.sendFileMessage = async (req, res) => {
   }
 };
 
-
 // Fetch all messages in a consultation
 // exports.getMessages = async (req, res) => {
 //   try {
@@ -90,7 +87,6 @@ exports.sendFileMessage = async (req, res) => {
 
 // Fetch all messages in a consultation
 exports.getConsultationMessages = async (req, res) => {
-
   try {
     const { consultationId } = req.params;
 
@@ -121,3 +117,16 @@ exports.getFile = (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
+exports.getConsultationAudioMessages = async (req, res) => {
+  try {
+    const messages = await Message.find({
+      consultationId: req.params.id,
+      messageType: "audio",
+    }).sort({ createdAt: -1 });
+
+    res.json(messages);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+}

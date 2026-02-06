@@ -9,6 +9,7 @@ import ProtectedRoute from "./components/common/protectedRoute";
 import SendMessagePage from "./components/pages/sendMessagePage";
 import { AuthProvider } from "./context/authContext";
 import DoctorPatientChat from "./components/pages/ChatMessage";
+import PatientDetails from "./components/pages/doctor/PatientDetails";
 
 function App() {
   return (
@@ -20,7 +21,7 @@ function App() {
           <Route path="/doctor-login" element={<DoctorAuthPage />} />
           <Route path="/patient-login" element={<PatientAuthPage />} />
           <Route path="/sendMsg" element={<SendMessagePage />} />
-          <Route path="/patients/:patientId" element={<DoctorPatientChat />} />
+          <Route path="/patients/:patientId" element={<PatientDetails />} />
 
           {/* Messaging Route */}
           <Route

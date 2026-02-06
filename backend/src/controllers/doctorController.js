@@ -1,4 +1,5 @@
 import Doctor from "../models/Doctor.js";
+import Consultation from "../models/Consultation.js";
 
 // GET all doctors
 export const getDoctors = async (req, res) => {
@@ -45,3 +46,19 @@ export const getDoctorProfile = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+
+export const getPatientsUnderDoctor = async (req, res) => {
+  try {
+    const doctorId = req.user._id;
+    const { patientId } = req.params;
+
+    const consultations = await Consultation.find({
+      doctorId,
+      patientId,
+    }).sort({ createdAt: -1 });
+
+    res.json(consultations);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+}

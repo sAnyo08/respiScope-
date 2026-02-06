@@ -6,6 +6,7 @@ const cookieParser = require("cookie-parser");
 require("dotenv").config();
 const messageRoutes = require("./routes/messageRoutes");
 const consultationRoutes = require("./routes/consultationRoutes");
+const audioRoutes = require("./routes/audioRoutes");
 
 // ✅ Unified routes
 const authRoutes = require("./routes/authRoutes");
@@ -46,6 +47,7 @@ app.get("/api/health", (req, res) => res.json({ ok: true }));
 
 app.use("/api/consultations", consultationRoutes);
 app.use("/message", messageRoutes);
+app.use("/api/audio/process/:messageId", audioRoutes)
 
 // Error handler
 app.use((err, req, res, next) => {

@@ -6,9 +6,10 @@ const MessageSchema = new mongoose.Schema({
   senderRole: { type: String, enum: ["doctor", "patient"], required: true },
   senderId: { type: mongoose.Schema.Types.ObjectId, required: true }, // Add this
   receiverId: { type: mongoose.Schema.Types.ObjectId, required: true }, // Add this
-  messageType: { type: String, enum: ["text", "audio", "file"], required: true },
+  messageType: { type: String, enum: ["text", "audio","audio_processed", "file"], required: true },
   text: { type: String },
-  fileId: { type: mongoose.Schema.Types.ObjectId }, // GridFS File ID
+  fileId: { type: mongoose.Schema.Types.ObjectId },// GridFS File ID
+  parentFileId: {type: mongoose.Schema.Types.ObjectId}, //raw audio reference
 }, { timestamps: true });
 
 module.exports = mongoose.model("Message", MessageSchema);

@@ -8,6 +8,7 @@ const {
   getMessages,
   getConsultationMessages,
   getFile,
+  getConsultationAudioMessages,
 } = require("../controllers/messageController");
 
 // Text message
@@ -31,5 +32,11 @@ router.get(
 
 // Stream file/audio by fileId
 router.get("/file/:id",auth(), getFile);
+
+router.get(
+  "/consultation/:id/audio",
+  auth("doctor"),
+  getConsultationAudioMessages
+);
 
 module.exports = router;

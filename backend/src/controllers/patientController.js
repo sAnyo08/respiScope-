@@ -1,7 +1,8 @@
-import Patient from "../models/Patient.js";
+// import Patient from "../models/Patient.js";
+const Patient = require("../models/Patient");
 
 // GET all patients
-export const getPatients = async (req, res) => {
+const getPatients = async (req, res) => {
   try {
     const patients = await Patient.find();
     res.json(patients);
@@ -11,7 +12,7 @@ export const getPatients = async (req, res) => {
 };
 
 // GET single patient
-export const getPatientById = async (req, res) => {
+const getPatientById = async (req, res) => {
   try {
     const patient = await Patient.findById(req.params.id).select("name age phone email");
     if (!patient) return res.status(404).json({ message: "Patient not found" });
@@ -22,7 +23,7 @@ export const getPatientById = async (req, res) => {
 };
 
 // POST create patient
-export const createPatient = async (req, res) => {
+const createPatient = async (req, res) => {
   try {
     const patient = new Patient(req.body);
     const savedPatient = await patient.save();
@@ -32,7 +33,7 @@ export const createPatient = async (req, res) => {
   }
 };
 
-export const getPatientProfile = async (req, res) => {
+const getPatientProfile = async (req, res) => {
   try {
     const patient = await Patient.findById(req.user._id);
 
@@ -45,3 +46,10 @@ export const getPatientProfile = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+
+module.exports = {
+  getPatients,
+  getPatientById,
+  createPatient,
+  getPatientProfile
+}

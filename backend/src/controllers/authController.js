@@ -17,6 +17,9 @@ const getUser = (role) => {
 
 // Register
 exports.register = async (req, res) => {
+  let user;
+  let profile;
+
   try {
     const role = req.role || req.params.role || req.body.role;
     // const User = getUser(role);
@@ -31,27 +34,60 @@ exports.register = async (req, res) => {
       return res.status(409).json({ message: `${role} already exists` });
     }
 
-    const user = new User({ name, phone, password, role, ...rest });
+    user = new User({ name, phone, password, role, ...rest });
     await user.save();
     // Create role-specific profile
+    // if (role === "doctor") {
+    //   const doctorProfile = new Doctor({ userId: user._id, name, phone, ...rest });
+    //   await doctorProfile.save();
+    // } else if (role === "patient") {
+    //   const patientProfile = new Patient({ userId: user._id, name, phone, ...rest });
+    //   await patientProfile.save();
+    // }
+
+
+    // ✅ Create profile and store in one variable
     if (role === "doctor") {
-      const doctorProfile = new Doctor({ userId: user._id, name, phone, ...rest });
-      await doctorProfile.save();
-    } else if (role === "patient") {
-      const patientProfile = new Patient({ userId: user._id, name, phone, ...rest });
-      await patientProfile.save();
+      profile = await Doctor.create({
+        userId: user._id,
+        name,
+        phone,
+        ...rest,
+      });
     }
 
+    if (role === "patient") {
+      profile = await Patient.create({
+        userId: user._id,
+        name,
+        phone,
+        ...rest,
+      });
+    }
 
-    res.status(201).json({ message: `${role} registered successfully` });
+    res.status(201).json({
+      message: `${role} registered successfully`,
+      user: profile,
+    });
+    
+      
   } catch (err) {
-    // 🔥 ROLLBACK user if profile creation failed
-    if (user?._id) {
+    // // 🔥 ROLLBACK user if profile creation failed
+    // if (user?._id) {
+    //   await User.findByIdAndDelete(user._id);
+    // }
+    
+    // console.error("register error:", err);
+    // res.status(500).json({ message: err.message || "Server error" });
+
+    // 🔥 SAFE rollback
+    if (user && user._id) {
       await User.findByIdAndDelete(user._id);
     }
-    
-    console.error("register error:", err);
-    res.status(500).json({ message: err.message || "Server error" });
+
+    return res.status(500).json({
+      message: err.message,
+    });
   }
 };
 
@@ -167,7 +203,7 @@ exports.logout = async (req, res) => {
       try {
         const payload = verifyRefreshToken(token);
         if (payload && payload.role === role) {
-          const User = getUser(role);
+          // const User = getUser(role);
           const user = await User.findById(payload.id);
           if (user) {
             user.refreshToken = null;

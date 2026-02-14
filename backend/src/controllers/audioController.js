@@ -5,7 +5,7 @@ const path = require("path");
 const { exec } = require("child_process");
 const Message = require("../models/message");
 
-exports.processAudioWithMatlab = async (req, res) => {
+const processAudioWithMatlab = async (req, res) => {
   try {
     const { messageId } = req.params;
 
@@ -91,3 +91,7 @@ exports.processAudioWithMatlab = async (req, res) => {
     res.status(500).json({ error: "Audio processing failed" });
   }
 };
+
+module.exports = {
+  processAudioWithMatlab,
+}

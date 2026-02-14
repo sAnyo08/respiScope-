@@ -1,8 +1,11 @@
-import Doctor from "../models/Doctor.js";
-import Consultation from "../models/Consultation.js";
+// import Doctor from "../models/Doctor.js";
+const Doctor = require("../models/Doctor");
+// import Consultation from "../models/Consultation.js";
+const Consultation = require("../models/Consultation");
+
 
 // GET all doctors
-export const getDoctors = async (req, res) => {
+const getDoctors = async (req, res) => {
   try {
     const doctors = await Doctor.find();
     res.json(doctors);
@@ -12,7 +15,7 @@ export const getDoctors = async (req, res) => {
 };
 
 // GET single doctor
-export const getDoctorById = async (req, res) => {
+const getDoctorById = async (req, res) => {
   try {
     const doctor = await Doctor.findById(req.params.id);
     if (!doctor) return res.status(404).json({ message: "Doctor not found" });
@@ -23,7 +26,7 @@ export const getDoctorById = async (req, res) => {
 };
 
 // POST create doctor
-export const createDoctor = async (req, res) => {
+const createDoctor = async (req, res) => {
   try {
     const doctor = new Doctor(req.body);
     const savedDoctor = await doctor.save();
@@ -33,7 +36,7 @@ export const createDoctor = async (req, res) => {
   }
 };
 
-export const getDoctorProfile = async (req, res) => {
+const getDoctorProfile = async (req, res) => {
   try {
     const doctor = await Doctor.findById(req.user._id);
 
@@ -47,7 +50,7 @@ export const getDoctorProfile = async (req, res) => {
   }
 };
 
-export const getPatientsUnderDoctor = async (req, res) => {
+const getPatientsUnderDoctor = async (req, res) => {
   try {
     const doctorId = req.user._id;
     const { patientId } = req.params;
@@ -61,4 +64,12 @@ export const getPatientsUnderDoctor = async (req, res) => {
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
+}
+
+module.exports = {
+  getDoctors,
+  getDoctorById,
+  createDoctor,
+  getDoctorProfile,
+  getPatientsUnderDoctor
 }

@@ -7,27 +7,27 @@ on:
     branches: [ main ]
 
 jobs:
-  test-backend:
+  test:
     runs-on: ubuntu-latest
 
+    defaults:
+      run:
+        working-directory: backend
+
     steps:
-      - name: Checkout Code
+      - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Setup Node
+      - name: Use Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 18
 
-      - name: Install Backend Dependencies
-        run: |
-          cd backend
-          npm install
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps
 
-      - name: Run Backend Tests
-        run: |
-          cd backend
-          npm test
+      - name: Run tests
         env:
           NODE_ENV: test
           JWT_SECRET: testsecret
+        run: npm test

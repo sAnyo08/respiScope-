@@ -5,13 +5,19 @@ const Consultation = require("../models/Consultation");
 
 // Send text message
 exports.sendTextMessage = async (req, res) => {
+
   const { consultationId, senderRole, senderId, receiverId, text } = req.body;
+
+  if (!consultationId || !text) {
+    return res.status(400).json({ message: "Missing fields" });
+  }
+
   try {
     const message = new Message({
       consultationId,
-      senderRole,
-      senderId,
-      receiverId,
+      senderRole: req.role,
+      senderId: req.authUserId,
+      receiverId: req.userId,
       messageType: "text",
       text,
     });

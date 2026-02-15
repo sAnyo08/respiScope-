@@ -6,8 +6,7 @@ let consultationId;
 let doctorId;
 
 beforeEach(async () => {
-
-  // Register Doctor
+  // Register doctor
   const doctor = await request(app)
     .post("/api/auth/register/doctor")
     .send({
@@ -19,7 +18,7 @@ beforeEach(async () => {
 
   doctorId = doctor.body.user._id;
 
-  // Register Patient
+  // Register patient
   await request(app)
     .post("/api/auth/register/patient")
     .send({
@@ -28,7 +27,7 @@ beforeEach(async () => {
       phone: "4444444444"
     });
 
-  // Login Patient
+  // Login patient
   const login = await request(app)
     .post("/api/auth/login/patient")
     .send({
@@ -38,24 +37,29 @@ beforeEach(async () => {
 
   token = login.body.accessToken;
 
-  // Create Consultation
+  // Create consultation
   const consultation = await request(app)
     .post("/api/consultations")
     .set("Authorization", `Bearer ${token}`)
     .send({ doctorId });
 
   consultationId = consultation.body._id;
-});
 
-test("Send Text Message", async () => {
-  const res = await request(app)
+  // Send a message
+  await request(app)
     .post("/message/text")
     .set("Authorization", `Bearer ${token}`)
     .send({
       consultationId,
       text: "Hello Doctor"
     });
+});
+
+test("Fetch consultation messages", async () => {
+  const res = await request(app)
+    .get(`/message/consultation/${consultationId}`)
+    .set("Authorization", `Bearer ${token}`);
 
   expect(res.statusCode).toBe(200);
-  expect(res.body.data).toHaveProperty("text");
+  expect(res.body.messages.length).toBeGreaterThan(0);
 });

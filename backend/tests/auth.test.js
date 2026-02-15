@@ -13,8 +13,6 @@ describe("Auth API", () => {
         phone: "9999999999"
       });
 
-      console.log(res.body);
-
     expect(res.statusCode).toBe(201);
     expect(res.body).toHaveProperty("message");
   });
@@ -29,16 +27,12 @@ describe("Auth API", () => {
         phone: "8888888888"
       });
 
-      
-
     const res = await request(app)
       .post("/api/auth/login/patient")
       .send({
         phone: "8888888888",
         password: "123456"
       });
-
-      console.log(res.body);
 
     expect(res.statusCode).toBe(200);
     expect(res.body).toHaveProperty("accessToken");

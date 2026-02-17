@@ -7,6 +7,10 @@ require("dotenv").config();
 const messageRoutes = require("./routes/messageRoutes");
 const consultationRoutes = require("./routes/consultationRoutes");
 const audioRoutes = require("./routes/audioRoutes");
+const iotRoutes = require("./routes/iotRoutes");
+
+const http = require("http");
+const WebSocket = require("ws");
 
 // ✅ Unified routes
 const authRoutes = require("./routes/authRoutes");
@@ -48,6 +52,8 @@ app.get("/api/health", (req, res) => res.json({ ok: true }));
 app.use("/api/consultations", consultationRoutes);
 app.use("/message", messageRoutes);
 app.use("/api/audio/process/:messageId", audioRoutes);
+
+app.use("/api/iot", iotRoutes);
 
 // Error handler
 app.use((err, req, res, next) => {

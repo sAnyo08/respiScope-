@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import AudioWaveform from "../../ui/AudioWaveform";
+import LiveAudioStream from "../../ui/LiveAudioStream";
 import {Button} from "../../ui/Button";
 
 const PatientDetails = () => {
@@ -110,6 +111,12 @@ const PatientDetails = () => {
 
       {/* ---------- MAIN CONTENT ---------- */}
       <div className="flex-1 p-8 overflow-y-auto">
+      
+      <div className="border-2">
+        <p>Live stream space</p>
+        <LiveAudioStream />
+      </div>    
+      
         {!selectedConsultation ? (
           <p className="text-gray-500">
             Select a consultation to view audio files

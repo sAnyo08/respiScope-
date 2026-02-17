@@ -12,4 +12,6 @@ const MessageSchema = new mongoose.Schema({
   parentFileId: {type: mongoose.Schema.Types.ObjectId}, //raw audio reference
 }, { timestamps: true });
 
-module.exports = mongoose.model("Message", MessageSchema);
+const Message = mongoose.models.Message || mongoose.model('Message', MessageSchema);
+
+module.exports = Message;

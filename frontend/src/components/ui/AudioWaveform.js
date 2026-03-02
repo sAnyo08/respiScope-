@@ -14,9 +14,9 @@ const AudioWaveform = ({ fileId }) => {
 
     const ws = WaveSurfer.create({
       container: containerRef.current,
-      waveColor: "#c7d2fe",
-      progressColor: "#0f766e",
-      cursorColor: "#0f766e",
+      waveColor: "#00ff00", // Neon Green
+      progressColor: "#32cd32", // Lime Green
+      cursorColor: "#00ff00",
       height: 70,
       barWidth: 2,
       barRadius: 2,
@@ -47,7 +47,7 @@ const AudioWaveform = ({ fileId }) => {
       cancelled = true;
       try {
         ws.destroy();
-      } catch {}
+      } catch { }
     };
   }, [fileId]);
 

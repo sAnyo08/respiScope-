@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import AudioWaveform from "../../ui/AudioWaveform";
 import LiveAudioStream from "../../ui/LiveAudioStream";
-import {Button} from "../../ui/Button";
+import { Button } from "../../ui/Button";
 
 const PatientDetails = () => {
   const { patientId } = useParams();
@@ -55,20 +55,10 @@ const PatientDetails = () => {
       }
     );
     alert("Processing started. Refresh in a moment.");
-  };  
+  };
 
-  const rawAudio = audioMessages.find(
-    (m) => m.messageType === "audio"
-  );
-  
-  const processedAudio = rawAudio
-    ? audioMessages.find(
-        (m) =>
-          m.messageType === "audio_processed" &&
-          String(m.parentFileId) === String(rawAudio.fileId)
-      )
-    : null;
-  
+  // Get only raw audio messages
+  const rawAudioMessages = audioMessages.filter((m) => m.messageType === "audio");
 
   return (
     <div className="flex h-screen bg-gray-100">
@@ -92,11 +82,10 @@ const PatientDetails = () => {
             <button
               key={c._id}
               onClick={() => setSelectedConsultation(c)}
-              className={`w-full text-left p-3 rounded-lg border ${
-                selectedConsultation?._id === c._id
+              className={`w-full text-left p-3 rounded-lg border ${selectedConsultation?._id === c._id
                   ? "bg-teal-100 border-teal-400"
                   : "hover:bg-gray-100"
-              }`}
+                }`}
             >
               <p className="text-sm font-medium">
                 Consultation #{c._id.slice(-6)}
@@ -110,69 +99,97 @@ const PatientDetails = () => {
       </div>
 
       {/* ---------- MAIN CONTENT ---------- */}
-      <div className="flex-1 p-8 overflow-y-auto">
-      
-      <div className="border-2">
-        <p>Live stream space</p>
-        <LiveAudioStream />
-      </div>    
-      
+      <div className="flex-1 p-8 overflow-y-auto w-full">
+
+        <div className="border-2 bg-black rounded-lg p-4 mb-6 relative">
+          <h3 className="text-green-400 font-bold mb-2 z-10 relative neon-text">Live Vitals Stream</h3>
+          <LiveAudioStream />
+        </div>
+
         {!selectedConsultation ? (
           <p className="text-gray-500">
             Select a consultation to view audio files
           </p>
-        ) : audioMessages.length === 0 ? (
+        ) : rawAudioMessages.length === 0 ? (
           <p className="text-gray-500">
             No audio recordings shared in this consultation
           </p>
         ) : (
           <div className="space-y-6">
-            {audioMessages.map((msg) => (
-              <div
-                key={msg._id}
-                className="bg-white p-4 rounded-xl shadow"
-              >
-                <p className="text-sm font-medium mb-2">
-                  Audio recorded on{" "}
-                  {new Date(msg.createdAt).toLocaleString()}
-                </p>
+            {rawAudioMessages.map((rawMsg) => {
+              // Find the processed counterpart for this specific raw message
+              const processedMsg = audioMessages.find(
+                (m) =>
+                  m.messageType === "audio_processed" &&
+                  String(m.parentFileId) === String(rawMsg.fileId)
+              );
 
-                {rawAudio && (
-                  <>
-                    <h4 className="font-semibold">Raw Audio</h4>
-                    <AudioWaveform fileId={rawAudio.fileId} />
-                  </>
-                )}
-
-                {processedAudio && (
-                  <>
-                    <h4 className="font-semibold mt-6">Processed Audio</h4>
-                    <AudioWaveform fileId={processedAudio.fileId} />
-                  </>
-                )}
-
-
-                <audio
-                  controls
-                  src={`http://localhost:5000/message/file/${msg.fileId}`}
-                  className="w-full mt-2"
-                />
-
-                <a
-                  href={`http://localhost:5000/message/file/${msg.fileId}`}
-                  download
-                  className="text-xs text-teal-600 hover:underline mt-2 inline-block"
+              return (
+                <div
+                  key={rawMsg._id}
+                  className="bg-white p-6 rounded-xl shadow-md border border-gray-100"
                 >
-                  Download audio
-                </a>
-                <Button
-                  onClick={() => processAudio(msg._id)}
-                  className="bg-indigo-600 text-white mt-3"
-                >
-                  Process Audio (MATLAB)
-                </Button>
-              </div>
-            ))}
+                  <div className="flex justify-between items-center mb-4">
+                    <p className="text-sm font-medium text-gray-600">
+                      Audio recorded on{" "}
+                      {new Date(rawMsg.createdAt).toLocaleString()}
+                    </p>
+                    <a
+                      href={`http://localhost:5000/message/file/${rawMsg.fileId}`}
+                      download
+                      className="text-sm bg-teal-50 text-teal-700 px-3 py-1 rounded hover:bg-teal-100 transition"
+                    >
+                      Download Raw
+                    </a>
+                  </div>
+
+                  <h4 className="font-semibold text-gray-800 mb-2">Raw Heart Sound</h4>
+                  <div className="bg-black p-2 rounded-lg shadow-inner">
+                    <AudioWaveform fileId={rawMsg.fileId} />
+                  </div>
+                  <audio
+                    controls
+                    src={`http://localhost:5000/message/file/${rawMsg.fileId}`}
+                    className="w-full mt-3 h-10"
+                  />
+
+                  {processedMsg ? (
+                    <div className="mt-8 border-t border-gray-100 pt-6">
+                      <div className="flex justify-between items-center mb-2">
+                        <h4 className="font-semibold text-gray-800">Processed Sound</h4>
+                        <a
+                          href={`http://localhost:5000/message/file/${processedMsg.fileId}`}
+                          download
+                          className="text-sm bg-indigo-50 text-indigo-700 px-3 py-1 rounded hover:bg-indigo-100 transition"
+                        >
+                          Download Processed
+                        </a>
+                      </div>
+                      <div className="bg-black p-2 rounded-lg shadow-inner">
+                        <AudioWaveform fileId={processedMsg.fileId} />
+                      </div>
+                      <audio
+                        controls
+                        src={`http://localhost:5000/message/file/${processedMsg.fileId}`}
+                        className="w-full mt-3 h-10"
+                      />
+                    </div>
+                  ) : (
+                    <div className="mt-4 pt-4 border-t border-gray-50">
+                      <Button
+                        onClick={() => processAudio(rawMsg._id)}
+                        className="bg-indigo-600 hover:bg-indigo-700 text-white w-full sm:w-auto"
+                      >
+                        Run Filter Processing
+                      </Button>
+                      <p className="text-xs text-gray-400 mt-2">
+                        Processing executes standard DSP filters on the backend to isolate heart sounds.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
       </div>

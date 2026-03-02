@@ -22,6 +22,8 @@ exports.sendTextMessage = async (req, res) => {
       text,
     });
     await message.save();
+    const io = req.app.get("io");
+    if (io) io.to(consultationId.toString()).emit("new-message", message);
     res.json({ message: "Text message sent", data: message });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -68,6 +70,9 @@ exports.sendFileMessage = async (req, res) => {
     });
 
     await message.save();
+
+    const io = req.app.get("io");
+    if (io) io.to(consultationId.toString()).emit("new-message", message);
 
     res.status(201).json({
       message: "File message sent",

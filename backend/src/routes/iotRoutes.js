@@ -3,7 +3,7 @@ const router = express.Router();
 const multer = require("multer");
 const { GridFsStorage } = require("multer-gridfs-storage");
 const mongoose = require("mongoose");
-const Message = require("../models/Message");
+const Message = require("../models/message");
 const { GridFSBucket } = require("mongodb");
 
 const createWavHeader = require("../utils/wavHeader");
@@ -83,6 +83,9 @@ router.post(
           messageType: "audio",
           fileId: uploadStream.id
         });
+
+        const io = req.app.get("io");
+        if (io) io.to(consultationId.toString()).emit("new-message", message);
 
         res.status(201).json({
           message: "Audio uploaded successfully",

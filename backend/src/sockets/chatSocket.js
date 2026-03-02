@@ -10,9 +10,12 @@ module.exports = (io) => {
     socket.on("authenticate", (token) => {
       try {
         const payload = verifyAccessToken(token);
+        if (!payload || !payload.id || !payload.role) {
+          throw new Error("Invalid token payload");
+        }
         socket.userId = payload.id;
         socket.role = payload.role;
-        console.log("Socket authenticated:",socket.role, socket.userId);
+        console.log("Socket authenticated:", socket.role, socket.userId);
       } catch (err) {
         console.log("Socket auth failed:", err.message);
         socket.emit("auth-error", "Invalid token");
@@ -43,7 +46,7 @@ module.exports = (io) => {
         return;
       }
 
-      socket.join(consultationId);
+      socket.join(consultationId.toString());
       console.log(`Joined consultation room: ${consultationId}`);
     });
 
@@ -72,7 +75,7 @@ module.exports = (io) => {
         });
 
         // Emit to both users in room
-        io.to(consultationId).emit("new-message", message);
+        io.to(consultationId.toString()).emit("new-message", message);
       } catch (err) {
         console.error("Socket message error:", err.message);
       }

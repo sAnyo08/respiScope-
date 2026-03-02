@@ -1,11 +1,10 @@
 const mongoose = require("mongoose");
 const { GridFSBucket } = require("mongodb");
-const fs = require("fs");
-const path = require("path");
-const { exec } = require("child_process");
 const Message = require("../models/message");
+const createWavHeader = require("../utils/wavHeader");
+const { Stream } = require("stream");
 
-const processAudioWithMatlab = async (req, res) => {
+const processAudioWithNode = async (req, res) => {
   try {
     const { messageId } = req.params;
 
@@ -17,52 +16,34 @@ const processAudioWithMatlab = async (req, res) => {
     const db = mongoose.connection.db;
     const bucket = new GridFSBucket(db, { bucketName: "uploads" });
 
-    // temp paths
-    const tempDir = path.join(__dirname, "../../temp");
-    if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir);
-
-    const rawPath = path.join(tempDir, `${messageId}_raw.wav`);
-    const processedPath = path.join(tempDir, `${messageId}_processed.wav`);
-
     /* -------- 1️⃣ DOWNLOAD RAW AUDIO FROM GRIDFS -------- */
-    await new Promise((resolve, reject) => {
-      const downloadStream = bucket.openDownloadStream(rawMessage.fileId);
-      const writeStream = fs.createWriteStream(rawPath);
+    const downloadStream = bucket.openDownloadStream(rawMessage.fileId);
+    const chunks = [];
 
-      downloadStream.pipe(writeStream);
-      writeStream.on("finish", resolve);
+    await new Promise((resolve, reject) => {
+      downloadStream.on("data", (chunk) => chunks.push(chunk));
       downloadStream.on("error", reject);
+      downloadStream.on("end", resolve);
     });
 
-    /* -------- 2️⃣ RUN MATLAB SCRIPT -------- */
-    await new Promise((resolve, reject) => {
-      exec(
-        `matlab -batch "process_audio"`,
-        {
-          env: {
-            ...process.env,
-            INPUT_AUDIO: rawPath,
-            OUTPUT_AUDIO: processedPath,
-          },
-        },
-        (err) => {
-          if (err) reject(err);
-          else resolve();
-        }
-      );
-    });
+    const rawBuffer = Buffer.concat(chunks);
+
+    /* -------- 2️⃣ PROCESS AUDIO: PREPEND WAV HEADER -------- */
+    // The ESP32 stream seems to be raw PCM. Generating a matching WAV header.
+    // Assuming 8000 Hz, 1 channel, 16 bits per sample (standard defaults in wavHeader.js)
+    const wavHeader = createWavHeader(rawBuffer.length);
+    const processedBuffer = Buffer.concat([wavHeader, rawBuffer]);
 
     /* -------- 3️⃣ UPLOAD PROCESSED AUDIO TO GRIDFS -------- */
-    const processedFileId = await new Promise((resolve, reject) => {
-      const uploadStream = bucket.openUploadStream(
-        path.basename(processedPath),
-        { contentType: "audio/wav" }
-      );
+    const uploadStream = bucket.openUploadStream(
+      `${messageId}_processed.wav`,
+      { contentType: "audio/wav" }
+    );
 
-      fs.createReadStream(processedPath)
-        .pipe(uploadStream)
-        .on("finish", () => resolve(uploadStream.id))
-        .on("error", reject);
+    const processedFileId = await new Promise((resolve, reject) => {
+      uploadStream.end(processedBuffer);
+      uploadStream.on("finish", () => resolve(uploadStream.id));
+      uploadStream.on("error", reject);
     });
 
     /* -------- 4️⃣ CREATE NEW MESSAGE -------- */
@@ -78,20 +59,16 @@ const processAudioWithMatlab = async (req, res) => {
 
     await processedMessage.save();
 
-    /* -------- CLEANUP -------- */
-    fs.unlinkSync(rawPath);
-    fs.unlinkSync(processedPath);
-
     res.json({
       message: "Audio processed successfully",
       data: processedMessage,
     });
   } catch (err) {
-    console.error("MATLAB processing error:", err);
+    console.error("Audio processing error:", err);
     res.status(500).json({ error: "Audio processing failed" });
   }
 };
 
 module.exports = {
-  processAudioWithMatlab,
+  processAudioWithMatlab: processAudioWithNode, // Keep exported name for route compatibility, or change route
 }

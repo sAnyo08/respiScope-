@@ -30,8 +30,11 @@ router.get(
 // Get all messages of a user patient
 // router.get("/:userId", getMessages);
 
-// Stream file/audio by fileId
-router.get("/file/:id",auth(), getFile);
+// Stream file/audio by fileId (Authenticated)
+router.get("/file/:id", auth(), getFile);
+
+// Public stream (for <audio> tags and downloads)
+router.get("/file/public/:id", getFile);
 
 router.get(
   "/consultation/:id/audio",

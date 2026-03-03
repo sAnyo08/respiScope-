@@ -39,9 +39,8 @@ api.interceptors.response.use(response => response, async (err) => {
 
     isRefreshing = true;
     try {
-      // role stored in localStorage by authService
       const role = localStorage.getItem('role') || 'doctor';
-      const res = await api.post(`/auth/${role}/refresh`); // backend must return { accessToken }
+      const res = await api.post(`/auth/${role}/refresh`); // matches router.post("/:role/refresh", refresh) in backend
       const newToken = res.data?.accessToken;
       if (!newToken) throw new Error('No access token returned');
       localStorage.setItem('accessToken', newToken);

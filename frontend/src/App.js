@@ -20,8 +20,6 @@ function App() {
           <Route path="/" element={<Landing />} />
           <Route path="/doctor-login" element={<DoctorAuthPage />} />
           <Route path="/patient-login" element={<PatientAuthPage />} />
-          <Route path="/sendMsg" element={<SendMessagePage />} />
-          <Route path="/patients/:patientId" element={<PatientDetails />} />
 
           {/* Messaging Route */}
           <Route
@@ -36,28 +34,36 @@ function App() {
           {/* Doctor Protected */}
           <Route
             path="/doctor-dashboard"
-            element={ <DoctorDashboard />
-              // <ProtectedRoute requiredRole="doctor">
-              //   <DoctorDashboard />
-              // </ProtectedRoute>
+            element={
+              <ProtectedRoute requiredRole="doctor">
+                <DoctorDashboard />
+              </ProtectedRoute>
             }
           />
           <Route
             path="/drpatients"
-            element={<DrPatients />
-              // <ProtectedRoute requiredRole="doctor">
-              //   <DrPatients />
-              // </ProtectedRoute>
+            element={
+              <ProtectedRoute requiredRole="doctor">
+                <DrPatients />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/patients/:patientId"
+            element={
+              <ProtectedRoute requiredRole="doctor">
+                <PatientDetails />
+              </ProtectedRoute>
             }
           />
 
           {/* Patient Protected */}
           <Route
             path="/patient-dashboard"
-            element={<PatientDashboard />
-              // <ProtectedRoute requiredRole="patient">
-              //   <PatientDashboard />
-              // </ProtectedRoute>
+            element={
+              <ProtectedRoute requiredRole="patient">
+                <PatientDashboard />
+              </ProtectedRoute>
             }
           />
         </Routes>

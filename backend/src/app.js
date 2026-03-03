@@ -45,15 +45,12 @@ app.use(limiter);
 app.use("/api/auth", authRoutes);
 app.use("/api/patients", patientRoutes);
 app.use("/api/doctors", doctorRoutes);
-// app.use('/api/profile', authRoutes);
+app.use("/api/consultations", consultationRoutes);
+app.use("/api/messages", messageRoutes);
+app.use("/api/audio", audioRoutes);
+app.use("/api/iot", iotRoutes);
 
 app.get("/api/health", (req, res) => res.json({ ok: true }));
-
-app.use("/api/consultations", consultationRoutes);
-app.use("/message", messageRoutes);
-app.use("/api/audio/process/:messageId", audioRoutes);
-
-app.use("/api/iot", iotRoutes);
 
 // Error handler
 app.use((err, req, res, next) => {

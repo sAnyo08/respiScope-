@@ -3,10 +3,10 @@ import { useParams } from "react-router-dom";
 import AudioWaveform from "../../ui/AudioWaveform";
 import LiveAudioStream from "../../ui/LiveAudioStream";
 import { Button } from "../../ui/Button";
+import api from "../../../services/api/api";
 
 const PatientDetails = () => {
   const { patientId } = useParams();
-  const token = localStorage.getItem("accessToken");
 
   const [patient, setPatient] = useState(null);
   const [consultations, setConsultations] = useState([]);
@@ -15,50 +15,47 @@ const PatientDetails = () => {
 
   /* ---------------- FETCH PATIENT ---------------- */
   useEffect(() => {
-    fetch(`http://localhost:5000/api/patients/${patientId}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((r) => r.json())
-      .then(setPatient);
-  }, [patientId, token]);
+    api.get(`/patients/${patientId}`)
+      .then((res) => setPatient(res.data))
+      .catch(err => console.error("Error fetching patient", err));
+  }, [patientId]);
 
   /* ---------------- FETCH CONSULTATIONS ---------------- */
   useEffect(() => {
-    fetch(
-      `http://localhost:5000/api/consultations/doctor/patient/${patientId}`,
-      { headers: { Authorization: `Bearer ${token}` } }
-    )
-      .then((r) => r.json())
-      .then(setConsultations);
-  }, [patientId, token]);
+    api.get(`/consultations/doctor/patient/${patientId}`)
+      .then((res) => setConsultations(res.data))
+      .catch(err => console.error("Error fetching consultations", err));
+  }, [patientId]);
 
   /* ---------------- FETCH AUDIO FILES ---------------- */
   useEffect(() => {
     if (!selectedConsultation) return;
 
-    fetch(
-      `http://localhost:5000/message/consultation/${selectedConsultation._id}/audio`,
-      { headers: { Authorization: `Bearer ${token}` } }
-    )
-      .then((r) => r.json())
-      .then(setAudioMessages);
-  }, [selectedConsultation, token]);
+    api.get(`/messages/consultation/${selectedConsultation._id}/audio`)
+      .then((res) => setAudioMessages(res.data))
+      .catch(err => console.error("Error fetching audio messages", err));
+  }, [selectedConsultation]);
 
   const processAudio = async (messageId) => {
-    await fetch(
-      `http://localhost:5000/api/audio/process/${messageId}`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-        },
+    try {
+      const res = await api.post(`/audio/process/${messageId}`);
+      // Add the new processed message to the state immediately
+      if (res.data && res.data.data) {
+        setAudioMessages(prev => [res.data.data, ...prev]);
       }
-    );
-    alert("Processing started. Refresh in a moment.");
+      alert("Filter applied successfully!");
+    } catch (err) {
+      console.error("Error processing audio", err);
+      alert("Failed to process audio: " + (err.response?.data?.error || err.message));
+    }
   };
 
-  // Get only raw audio messages
+  const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
+  const FILE_BASE_URL = API_URL.replace("/api", "/api/messages/file/public");
+
+  // Get raw audio messages and group them
   const rawAudioMessages = audioMessages.filter((m) => m.messageType === "audio");
+
 
   return (
     <div className="flex h-screen bg-gray-100">
@@ -135,7 +132,7 @@ const PatientDetails = () => {
                       {new Date(rawMsg.createdAt).toLocaleString()}
                     </p>
                     <a
-                      href={`http://localhost:5000/message/file/${rawMsg.fileId}`}
+                      href={`${FILE_BASE_URL}/${rawMsg.fileId}`}
                       download
                       className="text-sm bg-teal-50 text-teal-700 px-3 py-1 rounded hover:bg-teal-100 transition"
                     >
@@ -149,7 +146,7 @@ const PatientDetails = () => {
                   </div>
                   <audio
                     controls
-                    src={`http://localhost:5000/message/file/${rawMsg.fileId}`}
+                    src={`${FILE_BASE_URL}/${rawMsg.fileId}`}
                     className="w-full mt-3 h-10"
                   />
 
@@ -158,7 +155,7 @@ const PatientDetails = () => {
                       <div className="flex justify-between items-center mb-2">
                         <h4 className="font-semibold text-gray-800">Processed Sound</h4>
                         <a
-                          href={`http://localhost:5000/message/file/${processedMsg.fileId}`}
+                          href={`${FILE_BASE_URL}/${processedMsg.fileId}`}
                           download
                           className="text-sm bg-indigo-50 text-indigo-700 px-3 py-1 rounded hover:bg-indigo-100 transition"
                         >
@@ -170,7 +167,7 @@ const PatientDetails = () => {
                       </div>
                       <audio
                         controls
-                        src={`http://localhost:5000/message/file/${processedMsg.fileId}`}
+                        src={`${FILE_BASE_URL}/${processedMsg.fileId}`}
                         className="w-full mt-3 h-10"
                       />
                     </div>

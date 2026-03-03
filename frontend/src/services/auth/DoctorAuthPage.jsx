@@ -151,15 +151,15 @@ export default function DoctorAuthPage() {
       if (isLogin) {
         localStorage.setItem("accessToken", data.accessToken);
         localStorage.setItem("refreshToken", data.refreshToken);
-        
-        localStorage.setItem("role", data.role); // 🔥 MUST be lowercase
 
-        login(data.doctor, "doctor"); // ✅ update context
-        
+        const userRole = data.role || "doctor";
+        localStorage.setItem("role", userRole);
+
+        login(data.user, userRole); // ✅ update context with data.user
+
         navigate("/doctor-dashboard"); // ✅ redirect
         setMessage("Login successful!");
-      } else {
-        setMessage("Registration successful! You can now login.");
+      } else {        setMessage("Registration successful! You can now login.");
         setIsLogin(true);
       }
     } catch (err) {

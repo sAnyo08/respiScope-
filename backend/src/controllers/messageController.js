@@ -116,15 +116,34 @@ exports.getConsultationMessages = async (req, res) => {
 };
 
 // Stream a file from GridFS
-exports.getFile = (req, res) => {
+exports.getFile = async (req, res) => {
   try {
-    const gfs = new GridFSBucket(mongoose.connection.db, {
+    const bucket = new GridFSBucket(mongoose.connection.db, {
       bucketName: "uploads",
     });
 
     const fileId = new mongoose.Types.ObjectId(req.params.id);
-    gfs.openDownloadStream(fileId).pipe(res);
+
+    // 1. Find file metadata first
+    const files = await bucket.find({ _id: fileId }).toArray();
+    if (!files || files.length === 0) {
+      return res.status(404).json({ message: "File not found" });
+    }
+
+    const file = files[0];
+
+    // 2. Set headers for browser audio player
+    res.set({
+      "Content-Type": file.contentType || "audio/wav",
+      "Content-Length": file.length,
+      "Accept-Ranges": "bytes",
+      "Content-Disposition": `attachment; filename="${file.filename}"`,
+    });
+
+    // 3. Stream
+    bucket.openDownloadStream(fileId).pipe(res);
   } catch (err) {
+    console.error("getFile error:", err);
     res.status(500).json({ error: err.message });
   }
 };

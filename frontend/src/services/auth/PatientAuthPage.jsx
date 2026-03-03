@@ -159,9 +159,10 @@ const PatientAuthPage = () => {
         localStorage.setItem("accessToken", data.accessToken);
         localStorage.setItem("refreshToken", data.refreshToken);
 
-        localStorage.setItem("role", data.role); // 🔥 MUST be lowercase
+        const userRole = data.role || "patient";
+        localStorage.setItem("role", userRole);
 
-        login(data.patient, "patient");
+        login(data.user, userRole);
         navigate("/patient-dashboard");
         setMessage("Login successful!");
       } else {

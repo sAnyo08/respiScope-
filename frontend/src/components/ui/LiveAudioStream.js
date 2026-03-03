@@ -1,117 +1,142 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
-export default function LiveAudioStream() {
-  const canvasRef = useRef(null);
-  const audioContextRef = useRef(null);
+/**
+ * Ventilator-style Line Graph (Sweep)
+ * - Smoother line (moving sweep bar)
+ * - Real-time playback
+ */
+export default function LiveAudioStream({ consultationId }) {
+    const canvasRef = useRef(null);
+    const audioContextRef = useRef(null);
+    const [isMonitoring, setIsMonitoring] = useState(false);
 
-  useEffect(() => {
-    const socket = new WebSocket("ws://localhost:5000/iot-stream");
-    socket.binaryType = "arraybuffer";
+    useEffect(() => {
+        if (!isMonitoring) return;
 
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext("2d");
+        const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
+        const WS_URL = API_URL.replace("http", "ws").replace("/api", "/iot-stream") + `?consultationId=${consultationId}`;
 
-    // Waveform state
-    let dataBuffer = new Float32Array(canvas.width);
-    let xOffset = 0;
+        const socket = new WebSocket(WS_URL);
+        socket.binaryType = "arraybuffer";
 
-    // Setup canvas style
-    ctx.fillStyle = "#000000";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext("2d");
+        const width = canvas.width;
+        const height = canvas.height;
+        const centerY = height / 2;
 
-    ctx.strokeStyle = "#00ff00";
-    ctx.lineWidth = 2;
-    ctx.shadowBlur = 4;
-    ctx.shadowColor = "#32cd32";
+        let sweepX = 0;
+        const samplesPerPixel = 5;
 
-    const drawWaveform = (newSamples) => {
-      // Shift old data to the left by the number of new samples
-      const shiftLength = Math.min(newSamples.length, dataBuffer.length);
+        ctx.fillStyle = "#000000";
+        ctx.fillRect(0, 0, width, height);
 
-      dataBuffer.copyWithin(0, shiftLength);
-      dataBuffer.set(newSamples.slice(-shiftLength), dataBuffer.length - shiftLength);
+        const drawSweep = (floatData) => {
+            ctx.strokeStyle = "#00ff00";
+            ctx.lineWidth = 2;
+            ctx.shadowBlur = 8;
+            ctx.shadowColor = "#00ff00";
 
-      // Redraw entire canvas
-      ctx.fillStyle = "#000000";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = "#000000";
+            ctx.fillRect(sweepX, 0, 25, height); 
 
-      ctx.beginPath();
-      const centerY = canvas.height / 2;
+            ctx.beginPath();
+            for (let i = 0; i < floatData.length; i += samplesPerPixel) {
+                const val = floatData[i] || 0;
+                const y = centerY - val * (height / 2.5); 
+                
+                if (i === 0) ctx.moveTo(sweepX, y);
+                else ctx.lineTo(sweepX, y);
+                
+                sweepX += 1;
+                if (sweepX >= width) {
+                    sweepX = 0;
+                    ctx.fillRect(0, 0, 25, height);
+                    ctx.moveTo(0, y);
+                }
+            }
+            ctx.stroke();
+        };
 
-      for (let i = 0; i < dataBuffer.length; i++) {
-        const x = i;
-        // Float data is -1 to 1. Scale to canvas height.
-        // Add a scaling factor (e.g., 2.0) to make the wave more visible if it's quiet
-        const y = centerY - dataBuffer[i] * (canvas.height / 2) * 2.0;
+        socket.onmessage = (event) => {
+            const int16Data = new Int16Array(event.data);
+            const floatData = new Float32Array(int16Data.length);
 
-        if (i === 0) {
-          ctx.moveTo(x, y);
+            for (let i = 0; i < int16Data.length; i++) {
+                floatData[i] = int16Data[i] / 32768; 
+            }
+
+            // Playback
+            if (audioContextRef.current && audioContextRef.current.state === 'running') {
+                const buffer = audioContextRef.current.createBuffer(1, floatData.length, 8000);
+                buffer.copyToChannel(floatData, 0);
+                const source = audioContextRef.current.createBufferSource();
+                source.buffer = buffer;
+                source.connect(audioContextRef.current.destination);
+                source.start();
+            }
+
+            // Visuals
+            requestAnimationFrame(() => drawSweep(floatData));
+        };
+
+        return () => {
+            socket.close();
+        };
+    }, [consultationId, isMonitoring]);
+
+    const toggleMonitor = async () => {
+        if (!isMonitoring) {
+            if (!audioContextRef.current) {
+                audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)({
+                    sampleRate: 8000
+                });
+            }
+            if (audioContextRef.current.state === 'suspended') {
+                await audioContextRef.current.resume();
+            }
+            setIsMonitoring(true);
         } else {
-          ctx.lineTo(x, y);
+            setIsMonitoring(false);
+            if (audioContextRef.current) {
+                await audioContextRef.current.suspend();
+            }
         }
-      }
-
-      ctx.stroke();
     };
 
-    if (!audioContextRef.current) {
-      audioContextRef.current = new AudioContext();
-    }
-    const audioContext = audioContextRef.current;
+    return (
+        <div className="w-full h-48 bg-black rounded-xl overflow-hidden relative border-2 border-green-900/30 shadow-[0_0_20px_rgba(0,255,0,0.15)]">
+            {/* HUD Overlay */}
+            <div className="absolute top-4 left-4 flex items-center gap-3 z-10">
+                <button 
+                    onClick={toggleMonitor}
+                    className={`flex items-center gap-2 px-3 py-1 rounded border transition-colors ${
+                        isMonitoring 
+                        ? "bg-red-500/20 border-red-500 text-red-500" 
+                        : "bg-green-500/20 border-green-500 text-green-500"
+                    }`}
+                >
+                    <div className={`w-2 h-2 rounded-full ${isMonitoring ? "bg-red-500 animate-pulse" : "bg-green-500"}`} />
+                    <span className="text-[10px] font-bold tracking-[0.1em] font-mono">
+                        {isMonitoring ? "STOP MONITOR" : "START MONITOR"}
+                    </span>
+                </button>
+                <div className="px-2 py-1 bg-black/50 rounded border border-green-500/50">
+                    <span className="text-green-500 text-[10px] font-mono">8.0kHz / 16-bit</span>
+                </div>
+            </div>
 
-    socket.onmessage = (event) => {
-      const int16Data = new Int16Array(event.data);
-      const floatData = new Float32Array(int16Data.length);
+            {/* CRT Effect */}
+            <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] bg-[size:100%_4px,3px_100%] z-20" />
+            <div className="absolute inset-0 bg-[linear-gradient(rgba(0,255,0,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(0,255,0,0.05)_1px,transparent_1px)] bg-[size:32px_32px]" />
 
-      for (let i = 0; i < int16Data.length; i++) {
-        floatData[i] = int16Data[i] / 32768; // Normalize to -1 to 1
-      }
-
-      // 1. Play audio
-      const buffer = audioContext.createBuffer(1, floatData.length, 8000);
-      buffer.copyToChannel(floatData, 0);
-
-      const source = audioContext.createBufferSource();
-      source.buffer = buffer;
-      source.connect(audioContext.destination);
-      source.start();
-
-      // 2. Draw Visuals
-      // Downsample floatData for the canvas (drawing 8000 points per second is too dense)
-      // Pick e.g., every 10th sample
-      const downsampled = [];
-      for (let i = 0; i < floatData.length; i += 10) {
-        downsampled.push(floatData[i]);
-      }
-
-      // We use requestAnimationFrame to sync drawing with the browser
-      requestAnimationFrame(() => drawWaveform(new Float32Array(downsampled)));
-    };
-
-    return () => {
-      socket.close();
-      if (audioContextRef.current && audioContextRef.current.state !== "closed") {
-        audioContextRef.current.close();
-        audioContextRef.current = null;
-      }
-    };
-  }, []);
-
-  return (
-    <div className="w-full h-40 bg-black rounded-lg overflow-hidden relative shadow-[0_0_15px_rgba(0,255,0,0.2)] border border-green-900/50">
-      <div className="absolute top-2 left-3 flex items-center gap-2 z-10">
-        <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-        <span className="text-red-500 text-xs font-bold tracking-widest font-mono">LIVE REC</span>
-      </div>
-      {/* Grid overlay */}
-      <div className="absolute inset-0 bg-[linear-gradient(rgba(0,255,0,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(0,255,0,0.1)_1px,transparent_1px)] bg-[size:20px_20px] pointer-events-none" />
-
-      <canvas
-        ref={canvasRef}
-        width={800} // This can be dynamically resized in a more complex setup, using fixed 800 for width to ensure sharp rendering
-        height={160}
-        className="w-full h-full block"
-      />
-    </div>
-  );
+            <canvas
+                ref={canvasRef}
+                width={1000}
+                height={200}
+                className="w-full h-full block image-pixelated"
+            />
+        </div>
+    );
 }

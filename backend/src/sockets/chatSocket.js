@@ -1,25 +1,38 @@
 const Consultation = require("../models/Consultation");
 const Message = require("../models/message");
 const { verifyAccessToken } = require("../utils/jwt");
+const Doctor = require("../models/Doctor");
+const Patient = require("../models/Patient");
 
 module.exports = (io) => {
   io.on("connection", (socket) => {
     console.log("Socket connected:", socket.id);
 
     // 🔐 Authenticate socket
-    socket.on("authenticate", (token) => {
+    socket.on("authenticate", async (token) => {
       try {
         const payload = verifyAccessToken(token);
         if (!payload || !payload.id || !payload.role) {
           throw new Error("Invalid token payload");
         }
-        socket.userId = payload.id;
+        
+        // 🔥 We need the Profile ID, not the User ID
+        let profile;
+        if (payload.role === "doctor") {
+          profile = await Doctor.findOne({ userId: payload.id });
+        } else {
+          profile = await Patient.findOne({ userId: payload.id });
+        }
+
+        if (!profile) throw new Error("Profile not found");
+
+        socket.profileId = profile._id.toString();
+        socket.userId = payload.id; // Keep user ID too just in case
         socket.role = payload.role;
-        console.log("Socket authenticated:", socket.role, socket.userId);
+        console.log("Socket authenticated profile:", socket.role, socket.profileId);
       } catch (err) {
         console.log("Socket auth failed:", err.message);
         socket.emit("auth-error", "Invalid token");
-        // ❌ DO NOT disconnect immediately while debugging
       }
     });
 
@@ -27,22 +40,23 @@ module.exports = (io) => {
     socket.on("join-consultation", async ({ consultationId }) => {
       console.log("Join request:", consultationId);
 
-      if (!socket.userId) {
-        console.log("Join blocked: unauthenticated socket");
+      if (!socket.profileId) {
+        console.log("Join blocked: unauthenticated socket (missing profile)");
         return;
       }
 
       const consultation = await Consultation.findById(consultationId);
-
       if (!consultation) {
         console.log("Consultation not found");
         return;
       }
-      // Authorization
+
+      // Authorization using Profile IDs
       if (
-        consultation.doctorId.toString() !== socket.userId &&
-        consultation.patientId.toString() !== socket.userId
+        consultation.doctorId.toString() !== socket.profileId &&
+        consultation.patientId.toString() !== socket.profileId
       ) {
+        console.log("Join denied: not a participant");
         return;
       }
 
@@ -53,7 +67,7 @@ module.exports = (io) => {
     // 💬 Send message
     socket.on("send-message", async ({ consultationId, text }) => {
       try {
-        if (!socket.userId || !socket.role) {
+        if (!socket.profileId || !socket.role) {
           console.log("Message blocked: unauthenticated socket");
           return;
         }
@@ -68,7 +82,7 @@ module.exports = (io) => {
         const message = await Message.create({
           consultationId,
           senderRole: socket.role,
-          senderId: socket.userId,
+          senderId: socket.profileId, // 🔥 Store profile ID as sender
           receiverId,
           messageType: "text",
           text,

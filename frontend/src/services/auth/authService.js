@@ -1,45 +1,52 @@
-// src/services/authService.js
 import api from '../api/api';
 
-// Doctor
-export const registerDoctor = (payload) => api.post('/auth/doctor/register', payload).then(r => r.data);
-export const loginDoctor = async ({ phone, password }) => {
-  const res = await api.post('/auth/doctor/login', { phone, password });
-  const { accessToken, refreshToken, doctor } = res.data || {};
-  if (accessToken) localStorage.setItem('accessToken', accessToken);
-  if (refreshToken) localStorage.setItem('refreshToken', refreshToken); // fallback if backend returns it
-  localStorage.setItem('role', 'doctor');
-  return { doctor };
+// Shared
+const login = async (role, { phone, password }) => {
+  const res = await api.post(`/auth/login/${role}`, { phone, password });
+  const { accessToken, user, role: resRole } = res.data || {};
+  if (accessToken) {
+    localStorage.setItem('accessToken', accessToken);
+    localStorage.setItem('role', resRole || role);
+  }
+  return res.data;
 };
-export const refreshDoctor = () => api.post('/auth/doctor/refresh').then(r => r.data);
-export const logoutDoctor = () => api.post('/auth/doctor/logout').then(() => {
-  localStorage.removeItem('accessToken');
-  localStorage.removeItem('refreshToken');
-  localStorage.removeItem('role');
-});
 
-// Patient
-export const registerPatient = (payload) => api.post('/auth/patient/register', payload).then(r => r.data);
-export const loginPatient = async ({ phone, password }) => {
-  const res = await api.post('/auth/patient/login', { phone, password });
-  const { accessToken, refreshToken, patient } = res.data || {};
-  if (accessToken) localStorage.setItem('accessToken', accessToken);
-  if (refreshToken) localStorage.setItem('refreshToken', refreshToken);
-  localStorage.setItem('role', 'patient');
-  return { patient };
+const register = async (role, payload) => {
+  const res = await api.post(`/auth/register/${role}`, payload);
+  return res.data;
 };
-export const refreshPatient = () => api.post('/auth/patient/refresh').then(r => r.data);
-export const logoutPatient = () => api.post('/auth/patient/logout').then(() => {
-  localStorage.removeItem('accessToken');
-  localStorage.removeItem('refreshToken');
-  localStorage.removeItem('role');
-});
 
-// Profiles
-export const fetchDoctorProfile = () => api.get('/auth/doctors/profile').then(r => r.data);
-export const fetchPatientProfile = () => api.get('/auth/patients/profile').then(r => r.data);
+const logout = async (role) => {
+  try {
+    await api.post(`/auth/logout/${role}`);
+  } finally {
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
+    localStorage.removeItem('role');
+  }
+};
+
+const refresh = async (role) => {
+  const res = await api.post(`/auth/${role}/refresh`);
+  if (res.data?.accessToken) {
+    localStorage.setItem('accessToken', res.data.accessToken);
+  }
+  return res.data;
+};
+
+// Exports matching expected names if needed, or simplified ones
+export const loginDoctor = (credentials) => login('doctor', credentials);
+export const loginPatient = (credentials) => login('patient', credentials);
+export const registerDoctor = (payload) => register('doctor', payload);
+export const registerPatient = (payload) => register('patient', payload);
 
 export default {
-  registerDoctor, loginDoctor, refreshDoctor, logoutDoctor, fetchDoctorProfile,
-  registerPatient, loginPatient, refreshPatient, logoutPatient, fetchPatientProfile
+  login,
+  register,
+  logout,
+  refresh,
+  loginDoctor,
+  loginPatient,
+  registerDoctor,
+  registerPatient
 };

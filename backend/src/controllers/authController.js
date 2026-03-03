@@ -22,31 +22,21 @@ exports.register = async (req, res) => {
 
   try {
     const role = req.role || req.params.role || req.body.role;
-    // const User = getUser(role);
     if (!["doctor", "patient"].includes(role)) {
-      return res.status(400).json({ message: "Invalid role, write in smallcase" });
+      return res.status(400).json({ message: "Invalid role, write in lowercase" });
     }
 
     const { name, phone, password, ...rest } = req.body;
 
     const existing = await User.findOne({ phone });
     if (existing) {
-      return res.status(409).json({ message: `${role} already exists` });
+      return res.status(409).json({ message: `${role} already exists with this phone number` });
     }
 
     user = new User({ name, phone, password, role, ...rest });
     await user.save();
+
     // Create role-specific profile
-    // if (role === "doctor") {
-    //   const doctorProfile = new Doctor({ userId: user._id, name, phone, ...rest });
-    //   await doctorProfile.save();
-    // } else if (role === "patient") {
-    //   const patientProfile = new Patient({ userId: user._id, name, phone, ...rest });
-    //   await patientProfile.save();
-    // }
-
-
-    // ✅ Create profile and store in one variable
     if (role === "doctor") {
       profile = await Doctor.create({
         userId: user._id,
@@ -54,9 +44,7 @@ exports.register = async (req, res) => {
         phone,
         ...rest,
       });
-    }
-
-    if (role === "patient") {
+    } else if (role === "patient") {
       profile = await Patient.create({
         userId: user._id,
         name,
@@ -70,23 +58,15 @@ exports.register = async (req, res) => {
       user: profile,
     });
     
-      
   } catch (err) {
-    // // 🔥 ROLLBACK user if profile creation failed
-    // if (user?._id) {
-    //   await User.findByIdAndDelete(user._id);
-    // }
-    
-    // console.error("register error:", err);
-    // res.status(500).json({ message: err.message || "Server error" });
-
-    // 🔥 SAFE rollback
+    // 🔥 SAFE rollback if profile creation fails
     if (user && user._id) {
       await User.findByIdAndDelete(user._id);
     }
 
+    console.error("register error:", err);
     return res.status(500).json({
-      message: err.message,
+      message: err.message || "Registration failed",
     });
   }
 };
@@ -106,18 +86,12 @@ exports.login = async (req, res) => {
     const accessToken = signAccessToken({ id: user._id, role });
     const refreshToken = signRefreshToken({ id: user._id, role });
 
-    // Hash refresh token
+    // Hash refresh token for storage
     user.refreshToken = crypto
       .createHash("sha256")
       .update(refreshToken)
       .digest("hex");
     await user.save();
-
-    res.cookie("accessToken", accessToken, {
-      httpOnly: true,
-      sameSite: "lax",
-      secure: process.env.NODE_ENV === "production",
-    });
 
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
@@ -128,14 +102,12 @@ exports.login = async (req, res) => {
         7 * 24 * 60 * 60 * 1000,
     });
 
-     // ✅ Return the correct user data based on role
+     // Return the correct user data based on role
      let userData;
      if (role === "doctor") {
-       const doctor = await Doctor.findOne({ userId: user._id });
-       userData = doctor;
+       userData = await Doctor.findOne({ userId: user._id });
      } else {
-       const patient = await Patient.findOne({ userId: user._id });
-       userData = patient;
+       userData = await Patient.findOne({ userId: user._id });
      }
 
      res.json({ 

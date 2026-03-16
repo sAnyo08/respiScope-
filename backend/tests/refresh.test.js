@@ -24,7 +24,7 @@ test("Refresh token should generate new access token", async () => {
     .split("=")[1];
 
   const res = await request(app)
-    .post("/api/auth/refresh/patient")
+    .post("/api/auth/patient/refresh")
     .send({ refreshToken });
 
   expect(res.statusCode).toBe(200);

@@ -47,7 +47,7 @@ beforeEach(async () => {
 
   // Send a message
   await request(app)
-    .post("/message/text")
+    .post("/api/messages/text")
     .set("Authorization", `Bearer ${token}`)
     .send({
       consultationId,
@@ -57,7 +57,7 @@ beforeEach(async () => {
 
 test("Fetch consultation messages", async () => {
   const res = await request(app)
-    .get(`/message/consultation/${consultationId}`)
+    .get(`/api/messages/consultation/${consultationId}`)
     .set("Authorization", `Bearer ${token}`);
 
   expect(res.statusCode).toBe(200);

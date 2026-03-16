@@ -49,7 +49,7 @@ beforeEach(async () => {
 
 test("Send Text Message", async () => {
   const res = await request(app)
-    .post("/message/text")
+    .post("/api/messages/text")
     .set("Authorization", `Bearer ${token}`)
     .send({
       consultationId,

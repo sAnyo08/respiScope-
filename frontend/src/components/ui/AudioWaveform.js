@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react";
  * Ventilator-style Line Graph for Static Audio Files
  * Replaces WaveSurfer with a smooth oscilloscope-style line.
  */
-const AudioWaveform = ({ fileId }) => {
+const AudioWaveform = ({ fileId, peaks = [] }) => {
   const canvasRef = useRef(null);
 
   useEffect(() => {
@@ -29,29 +29,50 @@ const AudioWaveform = ({ fileId }) => {
     ctx.fillText("LOADING DATA...", 10, 20);
 
     fetch(FILE_URL)
-      .then((res) => res.arrayBuffer())
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+        return res.arrayBuffer();
+      })
       .then(async (arrayBuffer) => {
         if (cancelled) return;
         
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
-        const rawData = audioBuffer.getChannelData(0); // Get first channel
+        try {
+          const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+          const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+          const rawData = audioBuffer.getChannelData(0); // Get first channel
+          const duration = audioBuffer.duration || 1;
 
-        // Downsample for performance (approx 1 point per 2 pixels)
-        const samples = width * 2;
-        const blockSize = Math.floor(rawData.length / samples);
-        const filteredData = [];
-        for (let i = 0; i < samples; i++) {
-          filteredData.push(rawData[i * blockSize]);
+          // Downsample for performance (approx 1 point per 2 pixels)
+          const samples = width * 2;
+          const blockSize = Math.floor(rawData.length / samples) || 1;
+          const filteredData = [];
+          for (let i = 0; i < samples; i++) {
+            const index = i * blockSize;
+            if (index < rawData.length) {
+              filteredData.push(rawData[index]);
+            }
+          }
+
+          draw(filteredData, duration);
+        } catch (decodeError) {
+          console.error("Audio decode failed:", decodeError);
+          ctx.fillStyle = "#000";
+          ctx.fillRect(0, 0, width, height);
+          ctx.fillStyle = "#ff0000";
+          ctx.font = "12px monospace";
+          ctx.fillText("DECODE ERROR: Unsupported Format", 10, height/2);
         }
-
-        draw(filteredData);
       })
       .catch((err) => {
         console.error("Oscilloscope load error:", err);
+        ctx.fillStyle = "#000";
+        ctx.fillRect(0, 0, width, height);
+        ctx.fillStyle = "#ff0000";
+        ctx.font = "12px monospace";
+        ctx.fillText("LOAD ERROR: Check Connection", 10, height/2);
       });
 
-    const draw = (data) => {
+    const draw = (data, duration) => {
       if (cancelled) return;
 
       // Clear for draw
@@ -59,18 +80,38 @@ const AudioWaveform = ({ fileId }) => {
       ctx.fillRect(0, 0, width, height);
 
       // Draw Grid
-      ctx.strokeStyle = "rgba(0, 255, 0, 0.05)";
+      ctx.strokeStyle = "rgba(156, 156, 156, 0.16)";
       ctx.lineWidth = 1;
       for(let i=0; i<width; i+=40) {
           ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, height); ctx.stroke();
       }
-      for(let i=0; i<height; i+=40) {
+      for(let i=0; i<height; i+=30) {
           ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(width, i); ctx.stroke();
       }
 
-      // Draw Line
+      // 🔴 Draw Abnormal Peaks (Markers)
+      if (peaks && peaks.length > 0) {
+        ctx.setLineDash([5, 5]);
+        ctx.strokeStyle = "rgba(255, 0, 0, 1)";
+        ctx.lineWidth = 1;
+        peaks.forEach(time => {
+          const peakX = (time / duration) * width;
+          ctx.beginPath();
+          ctx.moveTo(peakX, 0);
+          ctx.lineTo(peakX, height);
+          ctx.stroke();
+          
+          // Peak label
+          ctx.fillStyle = "#ff0000";
+          ctx.font = "9px monospace";
+          ctx.fillText("ANOMALY", peakX + 2, 10);
+        });
+        ctx.setLineDash([]); // Reset dash
+      }
+
+      // Draw Waveform Line
       ctx.strokeStyle = "#00ff00";
-      ctx.lineWidth = 1.5;
+      ctx.lineWidth = 1;
       ctx.shadowBlur = 4;
       ctx.shadowColor = "#00ff00";
       
@@ -98,14 +139,14 @@ const AudioWaveform = ({ fileId }) => {
     return () => {
       cancelled = true;
     };
-  }, [fileId]);
+  }, [fileId, peaks]);
 
   return (
-    <div className="w-full h-24 bg-black rounded border border-green-900/30 overflow-hidden shadow-inner">
+    <div className="w-full h-32 bg-black rounded border border-green-900/30 overflow-hidden shadow-inner">
       <canvas
         ref={canvasRef}
         width={800}
-        height={100}
+        height={120}
         className="w-full h-full block"
       />
     </div>

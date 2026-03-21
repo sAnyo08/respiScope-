@@ -49,8 +49,12 @@ const DoctorSchema = new mongoose.Schema({
 // Auto-generate doctorId before saving
 DoctorSchema.pre("save", async function (next) {
   if (!this.doctorId) {
-    const count = await mongoose.model("Doctor").countDocuments();
-    this.doctorId = "DOC" + String(count + 1).padStart(5, "0"); // D-00001 format
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let result = '';
+    for (let i = 0; i <= 4; i++) {
+      result += characters.charAt(Math.floor(Math.random() * characters.length));
+    }
+    this.doctorId = "DOC" + result; // DOCAVM23 format
   }
   next();
 });

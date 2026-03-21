@@ -2,10 +2,26 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import AudioWaveform from "../../ui/AudioWaveform";
 import LiveAudioStream from "../../ui/LiveAudioStream";
+import AIAnalysisCard from "../../ui/AIAnalysisCard";
+import { Activity, Trash2 } from "lucide-react";
 import { Button } from "../../ui/Button";
 import api from "../../../services/api/api";
 
 const PatientDetails = () => {
+// ... inside component ...
+  const deleteMessage = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this recording?")) return;
+    try {
+      await api.delete(`/messages/${id}`);
+      setAudioMessages(prev => prev.filter(m => m._id !== id));
+      alert("Recording deleted");
+    } catch (err) {
+      console.error(err);
+      alert("Delete failed");
+    }
+  };
+// ... logic continues ...
+
   const { patientId } = useParams();
 
   const [patient, setPatient] = useState(null);
@@ -39,7 +55,6 @@ const PatientDetails = () => {
   const processAudio = async (messageId) => {
     try {
       const res = await api.post(`/audio/process/${messageId}`);
-      // Add the new processed message to the state immediately
       if (res.data && res.data.data) {
         setAudioMessages(prev => [res.data.data, ...prev]);
       }
@@ -50,12 +65,22 @@ const PatientDetails = () => {
     }
   };
 
+  const runAIAnalysis = async (messageId) => {
+    try {
+      const res = await api.post(`/audio/ai-analyze/${messageId}`);
+      // The update will likely come through a manual refresh or we can update local state
+      alert("AI Analysis triggered successfully!");
+      // Optionally refresh messages
+      api.get(`/messages/consultation/${selectedConsultation._id}/audio`)
+        .then((res) => setAudioMessages(res.data));
+    } catch (err) {
+      console.error("Error triggering AI", err);
+      alert("AI Analysis failed: " + (err.response?.data?.error || err.message));
+    }
+  }
+
   const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
   const FILE_BASE_URL = API_URL.replace("/api", "/api/messages/file/public");
-
-  // Get raw audio messages and group them
-  const rawAudioMessages = audioMessages.filter((m) => m.messageType === "audio");
-
 
   return (
     <div className="flex h-screen bg-gray-100">
@@ -80,8 +105,8 @@ const PatientDetails = () => {
               key={c._id}
               onClick={() => setSelectedConsultation(c)}
               className={`w-full text-left p-3 rounded-lg border ${selectedConsultation?._id === c._id
-                  ? "bg-teal-100 border-teal-400"
-                  : "hover:bg-gray-100"
+                ? "bg-teal-100 border-teal-400"
+                : "hover:bg-gray-100"
                 }`}
             >
               <p className="text-sm font-medium">
@@ -107,83 +132,101 @@ const PatientDetails = () => {
           <p className="text-gray-500">
             Select a consultation to view audio files
           </p>
-        ) : rawAudioMessages.length === 0 ? (
+        ) : audioMessages.length === 0 ? (
           <p className="text-gray-500">
             No audio recordings shared in this consultation
           </p>
         ) : (
           <div className="space-y-6">
-            {rawAudioMessages.map((rawMsg) => {
-              // Find the processed counterpart for this specific raw message
-              const processedMsg = audioMessages.find(
-                (m) =>
-                  m.messageType === "audio_processed" &&
-                  String(m.parentFileId) === String(rawMsg.fileId)
-              );
-
+            {audioMessages.filter(m => m.messageType === "audio").map((msg) => {
               return (
                 <div
-                  key={rawMsg._id}
-                  className="bg-white p-6 rounded-xl shadow-md border border-gray-100"
+                  key={msg._id}
+                  className="bg-white p-6 rounded-xl shadow-md border border-gray-100 grid grid-cols-1 lg:grid-cols-2 gap-6"
                 >
-                  <div className="flex justify-between items-center mb-4">
-                    <p className="text-sm font-medium text-gray-600">
-                      Audio recorded on{" "}
-                      {new Date(rawMsg.createdAt).toLocaleString()}
-                    </p>
-                    <a
-                      href={`${FILE_BASE_URL}/${rawMsg.fileId}`}
-                      download
-                      className="text-sm bg-teal-50 text-teal-700 px-3 py-1 rounded hover:bg-teal-100 transition"
-                    >
-                      Download Raw
-                    </a>
-                  </div>
-
-                  <h4 className="font-semibold text-gray-800 mb-2">Raw Heart Sound</h4>
-                  <div className="bg-black p-2 rounded-lg shadow-inner">
-                    <AudioWaveform fileId={rawMsg.fileId} />
-                  </div>
-                  <audio
-                    controls
-                    src={`${FILE_BASE_URL}/${rawMsg.fileId}`}
-                    className="w-full mt-3 h-10"
-                  />
-
-                  {processedMsg ? (
-                    <div className="mt-8 border-t border-gray-100 pt-6">
-                      <div className="flex justify-between items-center mb-2">
-                        <h4 className="font-semibold text-gray-800">Processed Sound</h4>
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center mb-4">
+                      <p className="text-sm font-medium text-gray-600">
+                        Recording from{" "}
+                        {new Date(msg.createdAt).toLocaleString()}
+                      </p>
+                      <div className="flex gap-2 items-center">
                         <a
-                          href={`${FILE_BASE_URL}/${processedMsg.fileId}`}
+                          href={`${FILE_BASE_URL}/${msg.fileId}`}
                           download
-                          className="text-sm bg-indigo-50 text-indigo-700 px-3 py-1 rounded hover:bg-indigo-100 transition"
+                          className="text-xs bg-gray-100 text-gray-700 px-3 py-1 rounded hover:bg-gray-200 transition"
                         >
-                          Download Processed
+                          Raw
                         </a>
+                        {msg.filteredFileId && (
+                          <a
+                            href={`${FILE_BASE_URL}/${msg.filteredFileId}`}
+                            download
+                            className="text-xs bg-teal-50 text-teal-700 px-3 py-1 rounded hover:bg-teal-100 transition"
+                          >
+                            Filtered
+                          </a>
+                        )}
+                        <button
+                          onClick={() => deleteMessage(msg._id)}
+                          className="p-1.5 text-red-500 hover:bg-red-50 rounded-full transition-colors"
+                          title="Delete Recording"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
                       </div>
-                      <div className="bg-black p-2 rounded-lg shadow-inner">
-                        <AudioWaveform fileId={processedMsg.fileId} />
-                      </div>
-                      <audio
-                        controls
-                        src={`${FILE_BASE_URL}/${processedMsg.fileId}`}
-                        className="w-full mt-3 h-10"
+                    </div>
+
+                    <h4 className="font-semibold text-gray-800 mb-2">
+                      {msg.filteredFileId ? "Filtered Heart Sound" : "Raw Audio Data"}
+                    </h4>
+                    <div className="bg-black p-2 rounded-lg shadow-inner">
+                      <AudioWaveform 
+                        fileId={msg.filteredFileId || msg.fileId} 
+                        peaks={msg.aiAnalysis?.peaks} 
                       />
                     </div>
-                  ) : (
-                    <div className="mt-4 pt-4 border-t border-gray-50">
-                      <Button
-                        onClick={() => processAudio(rawMsg._id)}
-                        className="bg-indigo-600 hover:bg-indigo-700 text-white w-full sm:w-auto"
-                      >
-                        Run Filter Processing
-                      </Button>
-                      <p className="text-xs text-gray-400 mt-2">
-                        Processing executes standard DSP filters on the backend to isolate heart sounds.
-                      </p>
+                    <audio
+                      controls
+                      src={`${FILE_BASE_URL}/${msg.filteredFileId || msg.fileId}`}
+                      className="w-full mt-3 h-10"
+                    />
+
+                    <div className="flex flex-col gap-2 pt-4 border-t border-gray-50">
+                      {!msg.filteredFileId ? (
+                        <Button
+                          onClick={() => processAudio(msg._id)}
+                          className="bg-indigo-600 hover:bg-indigo-700 text-white w-full"
+                        >
+                          Run DSP Filter
+                        </Button>
+                      ) : (!msg.aiAnalysis || msg.aiAnalysis.status === 'failed') ? (
+                        <Button
+                          onClick={() => runAIAnalysis(msg._id)}
+                          className="bg-teal-600 hover:bg-teal-700 text-white w-full"
+                        >
+                          Run AI Diagnostics
+                        </Button>
+                      ) : (
+                        <div className="text-center py-2 bg-green-50 text-green-700 rounded-lg text-xs font-bold border border-green-100">
+                          AI ANALYSIS COMPLETE
+                        </div>
+                      )}
                     </div>
-                  )}
+                  </div>
+
+                  {/* AI Analysis Column */}
+                  <div className="flex flex-col justify-center">
+                    {msg.aiAnalysis ? (
+                      <AIAnalysisCard analysis={msg.aiAnalysis} />
+                    ) : (
+                      <div className="h-full bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center p-8 text-center">
+                        <Activity className="w-12 h-12 text-gray-300 mb-4" />
+                        <h5 className="text-gray-400 font-bold">Waiting for Processing</h5>
+                        <p className="text-gray-400 text-xs">Diagnostic insights and spectrogram will appear here after filtering and AI analysis.</p>
+                      </div>
+                    )}
+                  </div>
                 </div>
               );
             })}

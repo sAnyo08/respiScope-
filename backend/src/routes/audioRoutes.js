@@ -10,4 +10,18 @@ router.post(
   audioController.processAudioWithMatlab
 );
 
+// POST /api/audio/ai-analyze/:messageId
+router.post(
+  "/ai-analyze/:messageId",
+  auth("doctor"),
+  async (req, res) => {
+    try {
+      const results = await audioController.analyzeAudioWithAI(req.params.messageId);
+      res.json({ message: "AI Analysis triggered", results });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  }
+);
+
 module.exports = router;

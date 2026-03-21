@@ -9,6 +9,7 @@ const {
   getConsultationMessages,
   getFile,
   getConsultationAudioMessages,
+  deleteMessage,
 } = require("../controllers/messageController");
 
 // Text message
@@ -41,5 +42,8 @@ router.get(
   auth("doctor"),
   getConsultationAudioMessages
 );
+
+// Delete message
+router.delete("/:id", auth(), deleteMessage);
 
 module.exports = router;

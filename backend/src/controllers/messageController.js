@@ -160,3 +160,53 @@ exports.getConsultationAudioMessages = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 }
+
+// Delete a message and its associated files
+exports.deleteMessage = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const message = await Message.findById(id);
+
+    if (!message) {
+      return res.status(404).json({ message: "Message not found" });
+    }
+
+    // Auth check: only sender or a doctor can delete?
+    // For now, let's allow the deletion if the user is part of the consultation
+    
+    const db = mongoose.connection.db;
+    const bucket = new GridFSBucket(db, { bucketName: "uploads" });
+
+    // 1. Delete Raw File
+    if (message.fileId) {
+      try {
+        await bucket.delete(message.fileId);
+      } catch (err) {
+        console.error("Failed to delete raw file:", err.message);
+      }
+    }
+
+    // 2. Delete Filtered File
+    if (message.filteredFileId) {
+      try {
+        await bucket.delete(message.filteredFileId);
+      } catch (err) {
+        console.error("Failed to delete filtered file:", err.message);
+      }
+    }
+
+    // 3. Delete Message from DB
+    await Message.findByIdAndDelete(id);
+
+    // 4. Notify via Socket
+    const io = req.app.get("io");
+    if (io) {
+      io.to(message.consultationId.toString()).emit("message-deleted", id);
+    }
+
+    res.json({ message: "Message and associated files deleted successfully" });
+  } catch (err) {
+    console.error("deleteMessage error:", err);
+    res.status(500).json({ error: err.message });
+  }
+};

@@ -1,0 +1,172 @@
+#include <WiFi.h>
+#include <WebSocketsClient.h>
+#include <HTTPClient.h>
+#include "driver/i2s.h"
+
+const char* ssid = "takemine";
+const char* password = "youaresexy";
+
+const char* serverIP = "10.73.78.31";
+const int serverPort = 5000;
+
+// 🔥 Hardcode the Patient ID here that belongs to the device user
+const char* PATIENT_ID = "67dfafc4ea807c4bc4594c03"; 
+String consultationId = "";
+
+WebSocketsClient webSocket;
+
+// I2S Pins
+#define I2S_WS   25
+#define I2S_SCK  26
+#define I2S_SD   22
+
+#define STATUS_LED 2
+
+#define I2S_PORT I2S_NUM_0
+#define SAMPLE_RATE 8000
+#define BUFFER_LEN 512
+#define RECORD_TIME 8
+
+void setup() {
+  Serial.begin(115200);
+  pinMode(STATUS_LED, OUTPUT);
+  digitalWrite(STATUS_LED, LOW);
+
+  // WiFi Connection
+  Serial.print("Connecting to WiFi");
+  WiFi.begin(ssid, password);
+
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+
+  Serial.println("\nWiFi Connected!");
+  Serial.print("ESP IP: ");
+  Serial.println(WiFi.localIP());
+
+  // Fetch active consultation ID
+  HTTPClient http;
+  String url = "http://" + String(serverIP) + ":" + String(serverPort) + "/api/iot/active-consultation/" + String(PATIENT_ID);
+  http.begin(url);
+  int httpCode = http.GET();
+  if (httpCode == 200) {
+    String payload = http.getString();
+    // simple string manipulation to extract consultationId from JSON
+    int start = payload.indexOf("consultationId\":\"") + 17;
+    int end = payload.indexOf("\"", start);
+    if (start > 16 && end > start) {
+      consultationId = payload.substring(start, end);
+      Serial.println("Fetched consultation ID: " + consultationId);
+    } else {
+      Serial.println("Failed to parse consultation ID");
+    }
+  } else {
+    Serial.println("Failed to get active consultation. HTTP Code: " + String(httpCode));
+  }
+  http.end();
+
+  // WebSocket
+  webSocket.begin(serverIP, serverPort, "/iot-stream");
+  webSocket.setExtraHeaders("User-Agent: ESP32");
+  webSocket.onEvent(webSocketEvent);
+
+  // I2S Config
+  i2s_config_t i2s_config = {
+    .mode = (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_RX),
+    .sample_rate = SAMPLE_RATE,
+    .bits_per_sample = I2S_BITS_PER_SAMPLE_16BIT,
+    .channel_format = I2S_CHANNEL_FMT_ONLY_LEFT,
+    .communication_format = I2S_COMM_FORMAT_I2S,
+    .intr_alloc_flags = ESP_INTR_FLAG_LEVEL1,
+    .dma_buf_count = 8,
+    .dma_buf_len = BUFFER_LEN,
+    .use_apll = false,
+    .tx_desc_auto_clear = false,
+    .fixed_mclk = 0
+  };
+
+  i2s_pin_config_t pin_config = {
+    .bck_io_num = I2S_SCK,
+    .ws_io_num = I2S_WS,
+    .data_out_num = I2S_PIN_NO_CHANGE,
+    .data_in_num = I2S_SD
+  };
+
+  i2s_driver_install(I2S_PORT, &i2s_config, 0, NULL);
+  i2s_set_pin(I2S_PORT, &pin_config);
+
+  Serial.println("I2S Initialized");
+}
+
+void loop() {
+
+  webSocket.loop();
+
+  if (consultationId == "") {
+    Serial.println("No active consultation found. Waiting...");
+    delay(5000);
+    return;
+  }
+
+  Serial.println("Recording Started...");
+  digitalWrite(STATUS_LED, HIGH);
+
+  int16_t samples[BUFFER_LEN];
+  size_t bytes_read;
+
+  HTTPClient http;
+  
+  unsigned long startTime = millis();
+  int totalBytesSent = 0;
+  int chunkIndex = 0;
+
+  while ((millis() - startTime) < RECORD_TIME * 1000) {
+
+    i2s_read(I2S_PORT, samples, sizeof(samples), &bytes_read, portMAX_DELAY);
+
+    if (bytes_read > 0) {
+
+      // Send to WebSocket (live)
+      webSocket.sendBIN((uint8_t*)samples, bytes_read);
+
+      // Send to Backend (HTTP)
+      String url = "http://" + String(serverIP) + ":" + String(serverPort) + "/api/iot/upload/" + consultationId + "?index=" + String(chunkIndex);
+      http.begin(url);
+      http.addHeader("Content-Type", "application/octet-stream");
+      int responseCode = http.POST((uint8_t*)samples, bytes_read);
+      
+      http.end(); // Ensure HTTP client handles closure neatly
+
+      Serial.print("Chunk ");
+      Serial.print(chunkIndex);
+      Serial.print(" Sent. Response Code: ");
+      Serial.println(responseCode);
+
+      totalBytesSent += bytes_read;
+      chunkIndex++;
+    }
+  }
+
+  digitalWrite(STATUS_LED, LOW);
+
+  Serial.print("Recording Complete. Total Bytes Sent: ");
+  Serial.println(totalBytesSent);
+
+  // Trigger assembly on target via /finish 
+  String finishUrl = "http://" + String(serverIP) + ":" + String(serverPort) + "/api/iot/upload/" + consultationId + "/finish";
+  http.begin(finishUrl);
+  int finishCode = http.POST("");
+  http.end();
+  
+  Serial.print("Finish Request Sent. Response Code: ");
+  Serial.println(finishCode);
+
+  delay(10000);
+}
+
+void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
+  if(type == WStype_CONNECTED) {
+    Serial.println("Connected to WebSocket server");
+  }
+}

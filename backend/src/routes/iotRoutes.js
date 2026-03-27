@@ -66,10 +66,19 @@ router.post("/upload/:consultationId/finish", async (req, res) => {
       return res.status(400).json({ message: "No chunks found for this consultation." });
     }
 
-    const totalLength = chunks.reduce((acc, chunk) => acc + chunk.data.length, 0);
-    const wavHeader = createWavHeader(totalLength);
+    // Safely extract Node Buffers to ensure .length works 
+    const chunkBuffs = chunks.map(c => {
+      if (Buffer.isBuffer(c.data)) return c.data;
+      if (c.data && c.data.buffer) return Buffer.from(c.data.buffer);
+      return Buffer.from(c.data);
+    });
+
+    const totalLength = chunkBuffs.reduce((acc, b) => acc + b.length, 0);
     
-    const buffers = [wavHeader, ...chunks.map(c => c.data)];
+    // Explicitly set 16000 to match everywhere
+    const wavHeader = createWavHeader(totalLength, 16000);
+    
+    const buffers = [wavHeader, ...chunkBuffs];
     const finalBuffer = Buffer.concat(buffers);
 
     const bucket = new GridFSBucket(mongoose.connection.db, {

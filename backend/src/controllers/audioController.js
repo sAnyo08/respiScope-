@@ -2,115 +2,143 @@ const mongoose = require("mongoose");
 const { GridFSBucket } = require("mongodb");
 const Message = require("../models/message");
 const createWavHeader = require("../utils/wavHeader");
+const axios = require("axios");
+const FormData = require("form-data");
 
 /**
- * Butterworth Low-Pass Filter Implementation (Order 2)
- * Since MATLAB 'designfilt' uses higher orders, we can chain multiple 2nd order sections 
- * or use a simple 1st order for demonstrative isolated heart sounds.
- * 
- * Target: Isolation of Heart Sounds (< 200Hz)
+ * AI Analysis logic: Sends audio to Python and updates original message
  */
-function applyLowPassFilter(samples, sampleRate, cutoff = 200) {
-    const rc = 1.0 / (cutoff * 2 * Math.PI);
-    const dt = 1.0 / sampleRate;
-    const alpha = dt / (rc + dt);
+const analyzeAudioWithAI = async (messageId, io) => {
+  try {
+    // 1. Set status to pending immediately to update UI
+    await Message.findByIdAndUpdate(messageId, { 
+      "aiAnalysis.status": "pending" 
+    });
+
+    const message = await Message.findById(messageId);
+    const targetFileId = message.filteredFileId || message.fileId;
+    if (!targetFileId) return;
+
+    const db = mongoose.connection.db;
+    const bucket = new GridFSBucket(db, { bucketName: "uploads" });
+    const downloadStream = bucket.openDownloadStream(targetFileId);
     
-    const output = new Int16Array(samples.length);
-    let lastValue = samples[0];
+    const chunks = [];
+    await new Promise((resolve, reject) => {
+      downloadStream.on("data", (chunk) => chunks.push(chunk));
+      downloadStream.on("error", reject);
+      downloadStream.on("end", resolve);
+    });
+    const audioBuffer = Buffer.concat(chunks);
 
-    for (let i = 0; i < samples.length; i++) {
-        // Simple 1st Order IIR filter
-        const currentValue = lastValue + alpha * (samples[i] - lastValue);
-        output[i] = Math.round(currentValue);
-        lastValue = currentValue;
+    const form = new FormData();
+    form.append("file", audioBuffer, {
+      filename: `analysis_${messageId}.wav`,
+      contentType: "audio/wav",
+    });
+
+    const aiResponse = await axios.post("http://localhost:8001/analyze", form, {
+      headers: { ...form.getHeaders() },
+    });
+
+    const results = aiResponse.data;
+
+    // 🚀 Update ORIGINAL message with AI insights
+    const updatedMessage = await Message.findByIdAndUpdate(messageId, {
+      aiAnalysis: {
+        label: results.label,
+        confidence: results.confidence,
+        peaks: results.abnormal_peaks,
+        spectrogram: results.spectrogram,
+        status: "completed"
+      }
+    }, { new: true });
+
+    if (io) {
+      io.to(message.consultationId.toString()).emit("ai-analysis-complete", updatedMessage);
     }
-    return output;
-}
 
+    return results;
+  } catch (err) {
+    console.error("AI Analysis failed:", err.message);
+    await Message.findByIdAndUpdate(messageId, { "aiAnalysis.status": "failed" });
+  }
+};
+
+/**
+ * Filter logic: Sends audio to Python, saves result to filteredFileId
+ */
 const processAudioWithNode = async (req, res) => {
   try {
     const { messageId } = req.params;
 
     const rawMessage = await Message.findById(messageId);
-    if (!rawMessage || rawMessage.messageType !== "audio") {
+    if (!rawMessage || !rawMessage.fileId) {
       return res.status(400).json({ message: "Invalid audio message" });
     }
 
     const db = mongoose.connection.db;
     const bucket = new GridFSBucket(db, { bucketName: "uploads" });
 
-    /* -------- 1️⃣ DOWNLOAD RAW AUDIO -------- */
+    // 1. Download
     const downloadStream = bucket.openDownloadStream(rawMessage.fileId);
     const chunks = [];
-
     await new Promise((resolve, reject) => {
       downloadStream.on("data", (chunk) => chunks.push(chunk));
       downloadStream.on("error", reject);
       downloadStream.on("end", resolve);
     });
-
     const rawBuffer = Buffer.concat(chunks);
-    
-    // Convert Buffer to Int16Array (16-bit PCM)
-    // Skip potential header if it's already a WAV (first 44 bytes)
-    // If it's a raw stream from ESP32, it might not have a header yet
-    let pcmData;
-    let startOffset = 0;
-    
-    if (rawBuffer.slice(0, 4).toString() === "RIFF") {
-        startOffset = 44; // Standard WAV header size
-    }
-    
-    const pcmBuffer = rawBuffer.slice(startOffset);
-    pcmData = new Int16Array(
-        pcmBuffer.buffer, 
-        pcmBuffer.byteOffset, 
-        pcmBuffer.length / 2
-    );
 
-    /* -------- 2️⃣ APPLY DSP FILTER (MATLAB PORT) -------- */
-    // isolating heart sounds (Low pass < 200Hz)
-    const filteredPcm = applyLowPassFilter(pcmData, 8000, 200);
+    // 2. Call Python to Filter
+    const form = new FormData();
+    form.append("file", rawBuffer, {
+      filename: `raw_${messageId}.webm`,
+      contentType: "audio/webm",
+    });
 
-    // Convert back to Buffer
-    const filteredBuffer = Buffer.from(filteredPcm.buffer);
-    const wavHeader = createWavHeader(filteredBuffer.length, 8000);
-    const finalBuffer = Buffer.concat([wavHeader, filteredBuffer]);
+    const filterResponse = await axios.post("http://localhost:8001/filter?filter_type=heart", form, {
+      headers: { ...form.getHeaders() },
+      responseType: 'arraybuffer'
+    });
 
-    /* -------- 3️⃣ UPLOAD PROCESSED AUDIO -------- */
+    const filteredWavBuffer = Buffer.from(filterResponse.data);
+
+    // 3. Upload Filtered Version
     const uploadStream = bucket.openUploadStream(
-      `processed_heart_${Date.now()}.wav`,
+      `filtered_${Date.now()}.wav`,
       { contentType: "audio/wav" }
     );
 
-    const processedFileId = await new Promise((resolve, reject) => {
-      uploadStream.end(finalBuffer);
+    const filteredFileId = await new Promise((resolve, reject) => {
+      uploadStream.end(filteredWavBuffer);
       uploadStream.on("finish", () => resolve(uploadStream.id));
       uploadStream.on("error", reject);
     });
 
-    /* -------- 4️⃣ CREATE NEW MESSAGE -------- */
-    const processedMessage = await Message.create({
-      consultationId: rawMessage.consultationId,
-      senderRole: "doctor",
-      senderId: req.userId, // Profile ID from authMiddleware
-      receiverId: rawMessage.senderId,
-      messageType: "audio_processed",
-      fileId: processedFileId,
-      parentFileId: rawMessage.fileId,
-      fileName: `Processed_Heart_Sound_${new Date().toLocaleTimeString()}.wav`
-    });
+    // 4. Update EXISTING message (don't create a new one)
+    // 🚀 REMOVED aiAnalysis: {status: "pending"} here.
+    const updatedMessage = await Message.findByIdAndUpdate(messageId, {
+      filteredFileId: filteredFileId
+    }, { new: true });
+
+    // Notify doctor's UI that filter is ready
+    const io = req.app.get("io");
+    if (io) {
+      io.to(rawMessage.consultationId.toString()).emit("ai-analysis-complete", updatedMessage);
+    }
 
     res.json({
-      message: "Audio processed successfully",
-      data: processedMessage,
+      message: "Audio filtered successfully. Click 'Run AI Analysis' to proceed.",
+      data: updatedMessage,
     });
   } catch (err) {
-    console.error("Audio processing error:", err);
+    console.error("Audio processing error:", err.message);
     res.status(500).json({ error: "Audio processing failed: " + err.message });
   }
 };
 
 module.exports = {
   processAudioWithMatlab: processAudioWithNode,
+  analyzeAudioWithAI
 }

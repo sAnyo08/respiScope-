@@ -5,7 +5,9 @@ import { Button } from "../ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/Card";
 import AudioWaveform from "../ui/AudioWaveform";
 import LiveAudioStream from "../ui/LiveAudioStream";
-import Navbar from "../utils/Navbar";
+import AIAnalysisCard from "../ui/AIAnalysisCard";
+import { Activity } from "lucide-react";
+//import Navbar from "../utils/Navbar";
 import { socket } from "../../socket";
 import api from "../../services/api/api";
 import {
@@ -27,6 +29,8 @@ import {
   Calendar,
   FolderOpen,
   X,
+  Zap,
+  Trash2,
 } from "lucide-react";
 
 const SendMessagePage = () => {
@@ -44,6 +48,16 @@ const SendMessagePage = () => {
   const fileInputRef = useRef(null);
   const token = localStorage.getItem("accessToken");
 
+  const deleteMessage = async (id) => {
+    if (!window.confirm("Delete this message?")) return;
+    try {
+      await api.delete(`/messages/${id}`);
+      setMessages(prev => prev.filter(m => m._id !== id));
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   /* ---------------- SOCKET SETUP ---------------- */
   useEffect(() => {
     if (!consultationId) return;
@@ -58,8 +72,20 @@ const SendMessagePage = () => {
       );
     });
 
+    socket.on("ai-analysis-complete", (updatedMsg) => {
+      setMessages((prev) =>
+        prev.map((m) => (m._id === updatedMsg._id ? updatedMsg : m))
+      );
+    });
+
+    socket.on("message-deleted", (deletedId) => {
+      setMessages((prev) => prev.filter((m) => m._id !== deletedId));
+    });
+
     return () => {
       socket.off("new-message");
+      socket.off("ai-analysis-complete");
+      socket.off("message-deleted");
       socket.disconnect();
     };
   }, [consultationId, token]);
@@ -143,6 +169,16 @@ const SendMessagePage = () => {
   const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
   const FILE_BASE_URL = API_URL.replace("/api", "/api/messages/file/public");
 
+  const runAIAnalysis = async (messageId) => {
+    try {
+      await api.post(`/audio/ai-analyze/${messageId}`);
+      alert("AI Analysis triggered!");
+    } catch (err) {
+      console.error("AI Analysis trigger failed", err);
+      alert("Failed to start AI Analysis");
+    }
+  };
+
   /* ---------------- HELPER FUNCTIONS ---------------- */
   const getFileIcon = (filename) => {
     if (!filename) return <File className="w-5 h-5" />;
@@ -166,14 +202,14 @@ const SendMessagePage = () => {
   /* ---------------- UI ---------------- */
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-      <Navbar
+      {/* <Navbar
         userType={role}
         userName={role === "doctor" ? `Dr. ${user?.name}` : user?.name}
         userCode={user?.code || user?._id?.slice(-6)}
-      />
+      /> */}
 
-      <main className="max-w-7xl mx-auto px-6 py-6">
-        <div className="flex h-[85vh] bg-white rounded-2xl shadow-2xl overflow-hidden border border-gray-200">
+      <main className="max-w-9xl mx-auto px-2 py-2">
+        <div className="flex h-[98vh] bg-white rounded-2xl shadow-2xl overflow-hidden border border-gray-200">
           {/* -------- RECEIVER SIDEBAR -------- */}
           <div className="w-80 border-r border-gray-200 bg-gradient-to-b from-white to-gray-50 flex flex-col">
             {/* Receiver Header */}
@@ -217,6 +253,18 @@ const SendMessagePage = () => {
                         </div>
                       </div>
                     )}
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div>
+                            <h2 className="text-sm text-gray-800">Consultation Chat</h2>
+                            <p className="text-sm text-gray-600">ID: {consultationId?.slice(-8)}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 bg-gray-500/20 backdrop-blur-sm px-3 py-1.5 rounded-full">
+                          <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                          <span className="text-xs text-gray-600 font-medium">Active</span>
+                        </div>
+                      </div>
                   </div>
                 </div>
               ) : (
@@ -283,26 +331,9 @@ const SendMessagePage = () => {
 
           {/* -------- CHAT AREA -------- */}
           <div className="flex flex-col flex-1">
-            <div className="bg-gradient-to-r from-teal-600 to-cyan-600 px-6 py-4 border-b border-teal-700 shadow-md">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
-                    <User className="w-5 h-5 text-white" />
-                  </div>
-                  <div>
-                    <h2 className="text-lg font-bold text-white">Consultation Chat</h2>
-                    <p className="text-xs text-teal-100">ID: {consultationId?.slice(-8)}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-full">
-                  <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                  <span className="text-xs text-white font-medium">Active</span>
-                </div>
-              </div>
-            </div>
 
             {/* Live Streaming Monitor */}
-            <div className="px-6 py-4 bg-gray-50 border-b">
+            <div className="px-2 py-2 bg-gray-50 border-b">
                <LiveAudioStream consultationId={consultationId} />
             </div>
 
@@ -327,13 +358,71 @@ const SendMessagePage = () => {
                       )}
 
                       <div className={`flex flex-col ${isSender ? "items-end" : "items-start"} max-w-lg`}>
-                        <div className={`px-4 py-3 rounded-2xl shadow-sm ${isSender ? "bg-gradient-to-br from-teal-50 to-cyan-600 text-white rounded-br-none" : "bg-white border border-gray-200 text-gray-900 rounded-bl-none"}`}>
+                        <div className={`px-4 py-3 rounded-2xl shadow-sm ${isSender ? "bg-gradient-to-br from-teal-100 to-cyan-600 text-white rounded-br-none" : "bg-white border border-gray-200 text-gray-900 rounded-bl-none"}`}>
                           {msg.messageType === "text" && <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">{msg.text}</p>}
-                          {msg.messageType === "audio" && (
-                            <div className="w-full space-y-2">
-                              <AudioWaveform fileId={msg.fileId} />
-                              <audio controls preload="metadata" className="w-full rounded-md" src={`${FILE_BASE_URL}/${msg.fileId}`} />
-                              <a href={`${FILE_BASE_URL}/${msg.fileId}`} download={msg.fileName || "recording.wav"} className="text-xs text-teal-600 hover:underline inline-flex items-center gap-1">⬇ Download</a>
+                          {(msg.messageType === "audio" || msg.messageType === "audio_processed") && (
+                            <div className="w-full space-y-3 min-w-[600px]">
+                              <div className="flex items-center justify-between mb-1">
+                                <span className={`text-[10px] font-bold uppercase tracking-wider ${isSender ? "text-teal-50" : "text-teal-600"}`}>
+                                  {role === "doctor" && msg.filteredFileId ? "Filtered Heart Sound" : "Audio Recording"}
+                                </span>
+                                {role === "doctor" && msg.aiAnalysis && (
+                                  <div className="flex items-center gap-1 bg-white/20 px-1.5 py-0.5 rounded text-[9px] font-bold">
+                                    <Zap className="w-2.5 h-2.5 fill-current" /> AI ANALYZED
+                                  </div>
+                                )}
+                              </div>
+                              
+                              <AudioWaveform 
+                                fileId={(role === "doctor" && msg.filteredFileId) || msg.fileId} 
+                                peaks={role === "doctor" ? msg.aiAnalysis?.peaks : []} 
+                              />
+                              
+                              <audio controls preload="metadata" className={`w-full h-8 rounded-md ${isSender ? "opacity-90" : ""}`} src={`${FILE_BASE_URL}/` + ((role === "doctor" && msg.filteredFileId) || msg.fileId)} />
+                              
+                              {/* 👨‍⚕️ Doctor-Only AI Controls & Results */}
+                              {role === "doctor" && (
+                                <div className="mt-2 space-y-2">
+                                  {msg.aiAnalysis ? (
+                                    <AIAnalysisCard analysis={msg.aiAnalysis} />
+                                  ) : !msg.filteredFileId ? (
+                                    <button 
+                                      onClick={() => {
+                                        api.post(`/audio/process/${msg._id}`)
+                                          .then(() => alert("Filter started!"))
+                                          .catch(err => console.error(err));
+                                      }}
+                                      className="w-full bg-indigo-600 text-white text-[10px] font-bold py-2 rounded-lg hover:bg-indigo-700 transition-all flex items-center justify-center gap-2"
+                                    >
+                                      <Activity className="w-3 h-3" />
+                                      Apply DSP Filter
+                                    </button>
+                                  ) : (
+                                    <button 
+                                      onClick={() => runAIAnalysis(msg._id)}
+                                      className="w-full bg-teal-600/10 hover:bg-teal-600/20 text-teal-700 text-[10px] font-bold py-2 rounded-lg border border-teal-600/20 transition-all flex items-center justify-center gap-2"
+                                    >
+                                      <Zap className="w-3 h-3" />
+                                      Run AI Diagnostics
+                                    </button>
+                                  )}
+                                </div>
+                              )}
+
+                              <div className="flex justify-between items-center pt-1">
+                                <a href={`${FILE_BASE_URL}/${msg.fileId}`} download={msg.fileName || "recording.wav"} className={`text-[10px] font-bold hover:underline flex items-center gap-1 ${isSender ? "text-teal-50" : "text-teal-600"}`}>
+                                  <Download className="w-3 h-3" /> Download Original
+                                </a>
+                                {role === "doctor" && (
+                                  <button 
+                                    onClick={() => deleteMessage(msg._id)}
+                                    className={`p-1 rounded-full transition-colors ${isSender ? "hover:bg-white/20 text-white" : "hover:bg-red-50 text-red-500"}`}
+                                    title="Delete Message"
+                                  >
+                                    <Trash2 className="w-3 h-3" />
+                                  </button>
+                                )}
+                              </div>
                             </div>
                           )}
                         </div>

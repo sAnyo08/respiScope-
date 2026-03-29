@@ -1,5 +1,5 @@
 const express = require("express");
-const { getPatients, getPatientById, createPatient, getPatientProfile } = require("../controllers/patientController.js");
+const { getPatients, getPatientById, createPatient, getPatientProfile, deletePatient } = require("../controllers/patientController.js");
 const auth = require("../middleware/authMiddleware.js");
 
 const router = express.Router();
@@ -15,5 +15,8 @@ router.get("/:id", getPatientById);
 
 // POST create new patient
 router.post("/", createPatient);
+
+// DELETE patient
+router.delete("/:id", auth("patient"), deletePatient);
 
 module.exports = router;

@@ -10,6 +10,14 @@ const MessageSchema = new mongoose.Schema({
   text: { type: String },
   fileId: { type: mongoose.Schema.Types.ObjectId },// GridFS File ID
   parentFileId: {type: mongoose.Schema.Types.ObjectId}, //raw audio reference
+  filteredFileId: { type: mongoose.Schema.Types.ObjectId }, // Filtered WAV reference
+  aiAnalysis: {
+    label: { type: String },
+    confidence: { type: Number },
+    peaks: [{ type: Number }], // timestamps of abnormal peaks
+    spectrogram: { type: String }, // Base64 encoded image or URL
+    status: { type: String, enum: ["pending", "completed", "failed"] }
+  }
 }, { timestamps: true });
 
 const Message = mongoose.models.Message || mongoose.model('Message', MessageSchema);

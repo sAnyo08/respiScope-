@@ -62,24 +62,30 @@ router.post("/upload/:consultationId/finish", async (req, res) => {
     }
 
     const chunks = await IotChunk.find({ consultationId }).sort({ chunkIndex: 1 });
-    if (!chunks || chunks.length === 0) {
-      return res.status(400).json({ message: "No chunks found for this consultation." });
+
+    if (!chunks.length) {
+      return res.status(400).json({ message: "No chunks found" });
     }
 
-    // Safely extract Node Buffers to ensure .length works 
-    const chunkBuffs = chunks.map(c => {
-      if (Buffer.isBuffer(c.data)) return c.data;
-      if (c.data && c.data.buffer) return Buffer.from(c.data.buffer);
-      return Buffer.from(c.data);
+    // ✅ Validate chunks
+    chunks.forEach((c, i) => {
+      if (c.chunkIndex !== i) {
+        console.warn(`Missing chunk at index ${i}`);
+      }
+      if (c.data.length !== 32000) {
+        console.warn(`Wrong chunk size at ${c.chunkIndex}: ${c.data.length}`);
+      }
     });
 
-    const totalLength = chunkBuffs.reduce((acc, b) => acc + b.length, 0);
-    
-    // Explicitly set 16000 to match everywhere
-    const wavHeader = createWavHeader(totalLength, 16000);
-    
-    const buffers = [wavHeader, ...chunkBuffs];
-    const finalBuffer = Buffer.concat(buffers);
+    // ✅ Safe buffer extraction
+    const buffers = chunks.map(c => Buffer.from(c.data));
+
+    const totalLength = buffers.reduce((acc, b) => acc + b.length, 0);
+
+    // ✅ Correct sample rate
+    const wavHeader = createWavHeader(totalLength, 8000);
+
+    const finalBuffer = Buffer.concat([wavHeader, ...buffers]);
 
     const bucket = new GridFSBucket(mongoose.connection.db, {
       bucketName: "uploads"
@@ -93,6 +99,7 @@ router.post("/upload/:consultationId/finish", async (req, res) => {
     uploadStream.end(finalBuffer);
 
     uploadStream.on("finish", async () => {
+
       const message = await Message.create({
         consultationId,
         senderId: consultation.patientId,
@@ -105,17 +112,16 @@ router.post("/upload/:consultationId/finish", async (req, res) => {
       const io = req.app.get("io");
       if (io) io.to(consultationId.toString()).emit("new-message", message);
 
-      // Clean up chunks
       await IotChunk.deleteMany({ consultationId });
 
       res.status(201).json({
-        message: "Audio assembled and uploaded successfully",
+        message: "Audio assembled successfully",
         data: message
       });
     });
 
   } catch (err) {
-    console.error("IoT finish error:", err);
+    console.error(err);
     res.status(500).json({ message: err.message });
   }
 });

@@ -1,9 +1,11 @@
 // src/context/AuthContext.jsx
-import React, { createContext, useEffect, useState } from 'react';
+import React, { createContext, useEffect, useState, useContext } from 'react';
 import { fetchDoctorProfile } from '../services/api/doctorService';
 import { fetchPatientProfile } from '../services/api/patientService';
 
 export const AuthContext = createContext();
+
+export const useAuth = () => useContext(AuthContext);
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);

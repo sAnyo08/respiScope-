@@ -19,7 +19,7 @@ export const Tabs = ({ children, defaultValue, className = "", ...props }) => {
 export const TabsList = ({ children, className = "", ...props }) => {
   return (
     <div
-      className={`inline-flex h-10 items-center justify-center rounded-md bg-gray-100 p-1 text-gray-500 ${className}`}
+      className={`inline-flex h-12 items-center justify-center rounded-xl bg-white/5 backdrop-blur-md border border-white/10 p-1 text-teal-100/60 shadow-inner ${className}`}
       {...props}
     >
       {children}
@@ -33,8 +33,10 @@ export const TabsTrigger = ({ children, value, className = "", ...props }) => {
 
   return (
     <button
-      className={`inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-white transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 ${
-        isActive ? "bg-white text-gray-950 shadow-sm" : "text-gray-500 hover:text-gray-900"
+      className={`inline-flex items-center justify-center whitespace-nowrap rounded-lg px-4 py-2 text-sm font-semibold transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900 disabled:pointer-events-none disabled:opacity-50 ${
+        isActive
+          ? "bg-gradient-to-r from-teal-500/80 to-emerald-500/80 text-white shadow-[0_0_15px_rgba(20,184,166,0.5)] border border-teal-300/50"
+          : "text-teal-100/60 hover:text-white hover:bg-white/5 active:scale-95"
       } ${className}`}
       onClick={() => setActiveTab(value)}
       {...props}
@@ -51,10 +53,12 @@ export const TabsContent = ({ children, value, className = "", ...props }) => {
 
   return (
     <div
-      className={`mt-2 ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 ${className}`}
+      className={`mt-4 ring-offset-gray-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-2 ${className}`}
       {...props}
     >
-      {children}
+      <div className="animate-in fade-in zoom-in-95 duration-300">
+        {children}
+      </div>
     </div>
   )
 }

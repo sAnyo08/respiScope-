@@ -124,10 +124,10 @@ const PatientDetails = () => {
       </div>
 
       {/* ---------- MAIN CONTENT ---------- */}
-      <div className="flex-1 p-8 overflow-y-auto w-full relative">
+      <div className="flex-1 p-4 overflow-y-auto w-full relative">
         <div className="absolute top-20 left-1/4 w-96 h-96 bg-teal-500/10 blur-[100px] rounded-full mix-blend-screen pointer-events-none"></div>
 
-        <Card className="mb-8 border-teal-500/30 shadow-[0_0_30px_rgba(20,184,166,0.1)]">
+        {/* <Card className="mb-8 border-teal-500/30 shadow-[0_0_30px_rgba(20,184,166,0.1)]">
           <CardContent className="p-6 relative">
             <div className="flex items-center gap-3 mb-4 z-10 relative">
               <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse shadow-[0_0_10px_rgba(74,222,128,1)]"></div>
@@ -137,7 +137,7 @@ const PatientDetails = () => {
               <LiveAudioStream />
             </div>
           </CardContent>
-        </Card>
+        </Card> */}
 
         {!selectedConsultation ? (
           <div className="flex flex-col items-center justify-center h-[50vh] text-center">
@@ -157,8 +157,8 @@ const PatientDetails = () => {
                   className="bg-white/5 border-white/10 overflow-hidden"
                 >
                   <CardContent className="p-0 grid grid-cols-1 lg:grid-cols-2 gap-0">
-                    <div className="p-6 border-r border-white/10 space-y-4">
-                      <div className="flex justify-between items-center mb-4">
+                    <div className="p-2 border-r border-white/10 space-y-2">
+                      <div className="flex justify-between items-center mb-2">
                         <p className="text-xs font-medium text-teal-200/60 uppercase tracking-wider">
                           {new Date(msg.createdAt).toLocaleString()}
                         </p>
@@ -196,7 +196,7 @@ const PatientDetails = () => {
                           <><Activity className="w-4 h-4 text-gray-400" /> Raw Audio Data</>
                         )}
                       </h4>
-                      <div className="bg-black/60 p-3 rounded-xl shadow-inner border border-white/5">
+                      <div className="bg-black/60 p-2 rounded-xl shadow-inner border border-white/5">
                         <AudioWaveform 
                           fileId={msg.filteredFileId || msg.fileId} 
                           peaks={msg.aiAnalysis?.peaks} 
@@ -208,7 +208,7 @@ const PatientDetails = () => {
                         className="w-full mt-3 h-10 opacity-80"
                       />
 
-                      <div className="flex flex-col gap-2 pt-6 border-t border-white/10">
+                      <div className="flex flex-col gap-2 pt-2 border-t border-white/10">
                         {!msg.filteredFileId ? (
                           <Button
                             variant="primary"

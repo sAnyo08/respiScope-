@@ -16,6 +16,7 @@ const WebSocket = require("ws");
 const authRoutes = require("./routes/authRoutes");
 const patientRoutes = require("./routes/patientRoutes");
 const doctorRoutes = require("./routes/doctorRoutes");
+const adminRoutes = require("./routes/adminRoutes");
 // const doctorAuthRoutes = require('./routes/doctorAuth');
 // const patientAuthRoutes = require('./routes/patientAuth');
 
@@ -49,6 +50,7 @@ app.use("/api/consultations", consultationRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/audio", audioRoutes);
 app.use("/api/iot", iotRoutes);
+app.use("/api/admin", adminRoutes);
 
 app.get("/api/health", (req, res) => res.json({ ok: true }));
 

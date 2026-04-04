@@ -13,7 +13,7 @@ export default function DoctorAuthPage() {
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({
     name: "",
-    role: "Doctor", // Defaulting to Doctor
+    role: "doctor", // Defaulting to Doctor
     phone: "",
     password: "",
     degree: "",

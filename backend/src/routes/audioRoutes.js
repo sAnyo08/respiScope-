@@ -16,8 +16,9 @@ router.post(
   auth("doctor"),
   async (req, res) => {
     try {
-      const results = await audioController.analyzeAudioWithAI(req.params.messageId);
-      res.json({ message: "AI Analysis triggered", results });
+      const io = req.app.get("io");
+      const updatedMessage = await audioController.analyzeAudioWithAI(req.params.messageId, io);
+      res.json({ message: "AI Analysis triggered", data: updatedMessage });
     } catch (err) {
       res.status(500).json({ error: err.message });
     }

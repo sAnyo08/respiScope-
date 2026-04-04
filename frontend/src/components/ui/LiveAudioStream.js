@@ -14,9 +14,12 @@ export default function LiveAudioStream({ consultationId }) {
         if (!isMonitoring) return;
 
         const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
-        const WS_URL = API_URL.replace("http", "ws").replace("/api", "/iot-stream") + `?consultationId=${consultationId}`;
+        const WS_URL = API_URL.replace("http", "ws").replace("/api", "/iot-stream") + `?consultationId=${consultationId}&device=browser`;
 
         const socket = new WebSocket(WS_URL);
+        socket.onopen = () => {
+            socket.send("START");
+        };
         socket.binaryType = "arraybuffer";
 
         const canvas = canvasRef.current;
@@ -82,6 +85,9 @@ export default function LiveAudioStream({ consultationId }) {
         };
 
         return () => {
+            if (socket.readyState === WebSocket.OPEN) {
+                socket.send("STOP");
+            }
             socket.close();
         };
     }, [consultationId, isMonitoring]);

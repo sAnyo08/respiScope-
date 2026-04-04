@@ -12,7 +12,7 @@ const PatientAuthPage = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({
     name: "",
-    role: "Patient", // Default mapping for API
+    role: "patient", // Default mapping for API
     phone: "",
     password: "",
     age: "",

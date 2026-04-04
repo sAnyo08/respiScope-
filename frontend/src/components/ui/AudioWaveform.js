@@ -89,6 +89,12 @@ const AudioWaveform = ({ fileId, peaks = [] }) => {
           ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(width, i); ctx.stroke();
       }
 
+      // Draw axis labels
+      ctx.fillStyle = "rgba(156, 156, 156, 0.8)";
+      ctx.font = "10px sans-serif";
+      ctx.fillText("Pressure (cmH2O)", 5, 12);
+      ctx.fillText("Time (s)", width - 50, height - 5);
+
       // 🔴 Draw Abnormal Peaks (Markers)
       if (peaks && peaks.length > 0) {
         ctx.setLineDash([5, 5]);

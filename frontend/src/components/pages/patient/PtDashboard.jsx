@@ -14,6 +14,7 @@ import PaitentDoctors from "../../utils/patientDoctors"
 import { getDoctors } from "../../../services/api/doctorService"
 import { DoctorCard } from "../../utils/DoctorCard"
 import PatientProfile from "../../utils/PatientProfile"
+import AuscultationGuide from "../../utils/AuscultationGuide"
 import Navbar from "../../utils/Navbar"
 import { createConsultation, getPatientConsultations } from "../../../services/api/consultationService"
 import { motion } from "framer-motion"
@@ -28,6 +29,7 @@ const PatientDashboard = () => {
 
   const tabs = [
     { name: "Home", icon: <Home className="w-4 h-4" /> },
+    { name: "Guide", icon: <Activity className="w-4 h-4" /> },
     { name: "Doctors", icon: <Users className="w-4 h-4" /> },
     { name: "History", icon: <Clock className="w-4 h-4" /> },
     { name: "Profile", icon: <User className="w-4 h-4" /> },
@@ -156,7 +158,7 @@ const PatientDashboard = () => {
       </nav>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-6 py-8 space-y-8 relative z-10">
+      <main className={`mx-auto px-6 py-8 space-y-8 relative z-10 ${activeTab === "Guide" ? "w-full" : "max-w-7xl"}`}>
         {activeTab === "Home" && (
           <motion.div 
             initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
@@ -372,6 +374,12 @@ const PatientDashboard = () => {
             <PatientPortal />
           </motion.div>
         )} */}
+
+        {activeTab === "Guide" && (
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
+            <AuscultationGuide />
+          </motion.div>
+        )}
 
         {activeTab === "Profile" && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>

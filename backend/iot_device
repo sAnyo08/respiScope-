@@ -39,6 +39,22 @@ int16_t chunkBuffer[CHUNK_SAMPLES];
 int chunkOffset = 0;
 int chunkIndex = 0;
 
+bool isRecording = false;
+bool wasRecording = false;
+
+void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
+  if (type == WStype_TEXT) {
+    String msg = (char*)payload;
+    if (msg == "START") {
+      isRecording = true;
+      Serial.println("Received START signal");
+    } else if (msg == "STOP") {
+      isRecording = false;
+      Serial.println("Received STOP signal");
+    }
+  }
+}
+
 // ---------------- SETUP ----------------
 void setup() {
   Serial.begin(115200);
@@ -70,7 +86,9 @@ void setup() {
   http.end();
 
   // WebSocket
-  webSocket.begin(serverIP, serverPort, "/iot-stream");
+  String wsPath = "/iot-stream?consultationId=" + consultationId + "&device=esp32";
+  webSocket.begin(serverIP, serverPort, wsPath.c_str());
+  webSocket.onEvent(webSocketEvent);
 
   // I2S Config
   i2s_config_t i2s_config = {
@@ -107,67 +125,69 @@ void loop() {
     return;
   }
 
+  if (!isRecording) {
+    if (wasRecording) {
+      wasRecording = false;
+      digitalWrite(STATUS_LED, LOW);
+      
+      // Finish request
+      HTTPClient http;
+      String finishUrl = "http://" + String(serverIP) + ":" + String(serverPort) +
+                         "/api/iot/upload/" + consultationId + "/finish";
+
+      http.begin(finishUrl);
+      int finishCode = http.POST("");
+      http.end();
+
+      Serial.println("Recording Stopped & Finished");
+    }
+    delay(50);
+    return;
+  }
+
+  wasRecording = true;
   digitalWrite(STATUS_LED, HIGH);
 
   size_t bytes_read;
-  unsigned long startTime = millis();
 
-  while ((millis() - startTime) < RECORD_TIME * 1000) {
+  i2s_read(I2S_PORT, i2sData, sizeof(i2sData), &bytes_read, portMAX_DELAY);
 
-    i2s_read(I2S_PORT, i2sData, sizeof(i2sData), &bytes_read, portMAX_DELAY);
+  int samplesRead = bytes_read / 4;
 
-    int samplesRead = bytes_read / 4;
-
-    // Convert 32-bit → 16-bit
-    for (int i = 0; i < samplesRead; i++) {
-      converted[i] = i2sData[i] >> 14;
-    }
-
-    // Debug amplitude
-    int maxVal = 0;
-    for (int i = 0; i < samplesRead; i++) {
-      if (abs(converted[i]) > maxVal) maxVal = abs(converted[i]);
-    }
-    Serial.println(maxVal);
-
-    // Copy to chunk buffer
-    memcpy(&chunkBuffer[chunkOffset], converted, samplesRead * sizeof(int16_t));
-    chunkOffset += samplesRead;
-
-    // When chunk full → send
-    if (chunkOffset >= CHUNK_SAMPLES) {
-
-      webSocket.sendBIN((uint8_t*)chunkBuffer, CHUNK_BYTES);
-
-      HTTPClient http;
-      String url = "http://" + String(serverIP) + ":" + String(serverPort) +
-                   "/api/iot/upload/" + consultationId + "?index=" + String(chunkIndex);
-
-      http.begin(url);
-      http.addHeader("Content-Type", "application/octet-stream");
-
-      int res = http.POST((uint8_t*)chunkBuffer, CHUNK_BYTES);
-      http.end();
-
-      Serial.printf("Chunk %d sent (%d bytes), res=%d\n", chunkIndex, CHUNK_BYTES, res);
-
-      chunkIndex++;
-      chunkOffset = 0;
-    }
+  // Convert 32-bit → 16-bit
+  for (int i = 0; i < samplesRead; i++) {
+    converted[i] = i2sData[i] >> 14;
   }
 
-  digitalWrite(STATUS_LED, LOW);
+  // Debug amplitude
+  int maxVal = 0;
+  for (int i = 0; i < samplesRead; i++) {
+    if (abs(converted[i]) > maxVal) maxVal = abs(converted[i]);
+  }
+  Serial.println(maxVal);
 
-  // Finish request
-  HTTPClient http;
-  String finishUrl = "http://" + String(serverIP) + ":" + String(serverPort) +
-                     "/api/iot/upload/" + consultationId + "/finish";
+  // Copy to chunk buffer
+  memcpy(&chunkBuffer[chunkOffset], converted, samplesRead * sizeof(int16_t));
+  chunkOffset += samplesRead;
 
-  http.begin(finishUrl);
-  int finishCode = http.POST("");
-  http.end();
+  // When chunk full → send
+  if (chunkOffset >= CHUNK_SAMPLES) {
 
-  Serial.println("Recording Done");
+    webSocket.sendBIN((uint8_t*)chunkBuffer, CHUNK_BYTES);
 
-  delay(10000);
+    HTTPClient http;
+    String url = "http://" + String(serverIP) + ":" + String(serverPort) +
+                 "/api/iot/upload/" + consultationId + "?index=" + String(chunkIndex);
+
+    http.begin(url);
+    http.addHeader("Content-Type", "application/octet-stream");
+
+    int res = http.POST((uint8_t*)chunkBuffer, CHUNK_BYTES);
+    http.end();
+
+    Serial.printf("Chunk %d sent (%d bytes), res=%d\n", chunkIndex, CHUNK_BYTES, res);
+
+    chunkIndex++;
+    chunkOffset = 0;
+  }
 }

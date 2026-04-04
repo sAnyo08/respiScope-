@@ -2,9 +2,15 @@ import React from 'react';
 import { Activity, ShieldAlert, CheckCircle, ZoomIn } from 'lucide-react';
 
 const AIAnalysisCard = ({ analysis }) => {
-  if (!analysis || !analysis.status) return null;
+  if (!analysis) return null;
 
-  if (analysis.status === 'pending') {
+  const isCompleted = analysis.status === 'completed' || !!analysis.label;
+  const isPending = analysis.status === 'pending' && !analysis.label;
+  const isFailed = analysis.status === 'failed';
+
+  if (!isCompleted && !isPending && !isFailed) return null;
+
+  if (isPending) {
     return (
       <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-center gap-3 animate-pulse">
         <Activity className="w-5 h-5 text-blue-500 animate-spin" />

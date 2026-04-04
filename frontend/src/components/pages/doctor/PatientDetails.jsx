@@ -71,11 +71,10 @@ const PatientDetails = () => {
   const runAIAnalysis = async (messageId) => {
     try {
       const res = await api.post(`/audio/ai-analyze/${messageId}`);
-      // The update will likely come through a manual refresh or we can update local state
-      addToast("AI Analysis triggered successfully!", "success");
-      // Optionally refresh messages
-      api.get(`/messages/consultation/${selectedConsultation._id}/audio`)
-        .then((res) => setAudioMessages(res.data));
+      if (res.data && res.data.data) {
+        setAudioMessages(prev => prev.map(m => m._id === messageId ? res.data.data : m));
+      }
+      addToast("AI Analysis completed successfully!", "success");
     } catch (err) {
       console.error("Error triggering AI", err);
       addToast("AI Analysis failed: " + (err.response?.data?.error || err.message), "error");
@@ -124,20 +123,20 @@ const PatientDetails = () => {
       </div>
 
       {/* ---------- MAIN CONTENT ---------- */}
-      <div className="flex-1 p-4 overflow-y-auto w-full relative">
+      <div className="flex-1 p-3 overflow-y-auto w-full relative">
         <div className="absolute top-20 left-1/4 w-96 h-96 bg-teal-500/10 blur-[100px] rounded-full mix-blend-screen pointer-events-none"></div>
 
-        {/* <Card className="mb-8 border-teal-500/30 shadow-[0_0_30px_rgba(20,184,166,0.1)]">
-          <CardContent className="p-6 relative">
-            <div className="flex items-center gap-3 mb-4 z-10 relative">
-              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse shadow-[0_0_10px_rgba(74,222,128,1)]"></div>
-              <h3 className="text-teal-400 font-bold tracking-wide">LIVE VITALS STREAM</h3>
+        <Card className="mb-4 border-teal-500/30 shadow-[0_0_50px_rgba(20,184,166,0.1)]">
+          <CardContent className="p-2 relative">
+            <div className="flex items-center gap-3 mb-2 z-10 relative">
+              <div className="w-1 h-1 bg-green-400 rounded-full animate-pulse shadow-[0_0_10px_rgba(74,222,128,1)]"></div>
+              <h3 className="text-teal-400 tracking-wide">LIVE VITALS STREAM</h3>
             </div>
             <div className="bg-black/40 rounded-xl overflow-hidden border border-white/5 relative z-10">
               <LiveAudioStream />
             </div>
           </CardContent>
-        </Card> */}
+        </Card>
 
         {!selectedConsultation ? (
           <div className="flex flex-col items-center justify-center h-[50vh] text-center">

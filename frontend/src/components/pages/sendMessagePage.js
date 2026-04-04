@@ -175,7 +175,10 @@ const SendMessagePage = () => {
 
   const runAIAnalysis = async (messageId) => {
     try {
-      await api.post(`/audio/ai-analyze/${messageId}`);
+      const res = await api.post(`/audio/ai-analyze/${messageId}`);
+      if (res.data && res.data.data) {
+        setMessages(prev => prev.map(m => m._id === messageId ? res.data.data : m));
+      }
       addToast("AI Analysis triggered!", "success");
     } catch (err) {
       console.error("AI Analysis trigger failed", err);

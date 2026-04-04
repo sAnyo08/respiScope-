@@ -46,7 +46,13 @@ const PatientSchema = new mongoose.Schema({
   address: { type: String },
   height: { type: Number },
   weight: { type: Number },
-  priorDisease: { type: String }
+  priorDisease: { type: String },
+  aiHistory: [{
+    diseaseLabel: String,
+    confidence: Number,
+    date: { type: Date, default: Date.now },
+    consultationId: { type: mongoose.Schema.Types.ObjectId, ref: "Consultation" }
+  }]
 }, { timestamps: true });
 
 // Auto-generate patientId before saving

@@ -34,17 +34,23 @@ const wss = new WebSocket.Server({
 });
 
 let browserClients = [];
+let esp32Clients = new Map(); // consultationId -> ws
 let streamBuffers = new Map(); // consultationId -> Buffer chunks
 
 wss.on("connection", (ws, req) => {
   const urlParams = new URLSearchParams(req.url.split('?')[1]);
   const consultationId = urlParams.get('consultationId');
+  const device = urlParams.get('device');
 
   console.log(`New WebSocket connection: ${req.url} | Consultation: ${consultationId}`);
 
   // If ESP32 connects
-  if (req.headers["user-agent"]?.includes("ESP32") || consultationId) {
+  if (device === "esp32" || (!device && req.headers["user-agent"]?.includes("ESP32"))) {
     console.log("ESP32/Device connected for streaming");
+    
+    if (consultationId) {
+      esp32Clients.set(consultationId, ws);
+    }
     
     if (consultationId && !streamBuffers.has(consultationId)) {
       streamBuffers.set(consultationId, []);
@@ -67,6 +73,9 @@ wss.on("connection", (ws, req) => {
 
     ws.on("close", async () => {
       console.log("Stream source disconnected. Finalizing recording...");
+      if (consultationId) {
+        esp32Clients.delete(consultationId);
+      }
       if (consultationId && streamBuffers.has(consultationId)) {
         const chunks = streamBuffers.get(consultationId);
         streamBuffers.delete(consultationId);
@@ -107,6 +116,19 @@ wss.on("connection", (ws, req) => {
   } else {
     console.log("Browser connected for listening");
     browserClients.push(ws);
+    
+    ws.on("message", (data) => {
+      const text = data.toString();
+      if (text === "START" || text === "STOP") {
+        if (consultationId && esp32Clients.has(consultationId)) {
+          console.log(`Routing ${text} to ESP32 for consultation ${consultationId}`);
+          esp32Clients.get(consultationId).send(text);
+        } else {
+          console.log(`Cannot route ${text}: ESP32 not connected for consultation ${consultationId}`);
+        }
+      }
+    });
+    
     ws.on("close", () => {
       browserClients = browserClients.filter((c) => c !== ws);
     });

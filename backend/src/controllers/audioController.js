@@ -58,7 +58,19 @@ const analyzeAudioWithAI = async (messageId, io) => {
       io.to(message.consultationId.toString()).emit("ai-analysis-complete", updatedMessage);
     }
 
-    return results;
+    // 🚀 Store AI results into the Patient's history data
+    const consultation = await mongoose.model("Consultation").findById(message.consultationId);
+    if (consultation && consultation.patientId) {
+      await mongoose.model("Patient").findByIdAndUpdate(consultation.patientId, {
+        $push: { aiHistory: {
+          diseaseLabel: results.label,
+          confidence: results.confidence,
+          consultationId: consultation._id
+        }}
+      });
+    }
+
+    return updatedMessage;
   } catch (err) {
     console.error("AI Analysis failed:", err.message);
     await Message.findByIdAndUpdate(messageId, { "aiAnalysis.status": "failed" });

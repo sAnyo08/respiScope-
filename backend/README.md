@@ -5,8 +5,10 @@ This repository contains the backend service for the **RespiScope** application.
 ## 🚀 Tech Stack
 
 - **Runtime Environment:** Node.js
-- **Framework:** Express.js
+- **Framework:** Express.js 
+- **AI Microservice:** FastAPI (Python) for evaluating AI inference models.
 - **Database:** MongoDB (with Mongoose ODM)
+- **Model Training Dataset:** Combined dataset sourced primarily from the Kaggle ICBHI Respiratory Sound Database and supplementary medical datasets to train the core RespiScope diagnostic models.
 - **Real-Time Communication:** Socket.IO / WebSocket (`ws`)
 - **Authentication:** JSON Web Tokens (JWT) & bcryptjs
 - **File Storage:** GridFS (via `multer-gridfs-storage` & `multer`)
@@ -41,8 +43,30 @@ backend/
 - **Consultation Management:** Patients can initiate consultations with Doctors, bridging communication into dedicated active sessions.
 - **Real-Time Chat:** Integrated WebSockets for real-time text and audio/file messaging during active consultations.
 - **IoT Device Integration:** Custom REST endpoint specifically meant to capture high-throughput stream recordings from connected medical IoT stethoscopes, streaming directly into MongoDB GridFS.
-- **Medical Audio Processing:** Audio uploaded from IoT devices or apps can be subjected to MATLAB script analysis directly from the server.
+- **Medical Audio Processing:** Audio uploaded from IoT devices or apps can be subjected to advanced analysis directly from the server.
 - **Security:** Helmet for securing HTTP headers and `express-rate-limit` to prevent brute-force attacks.
+
+## 🔬 Advanced Audio Processing & AI Pipeline
+
+To provide robust and accurate diagnostic features, RespiScope employs a sophisticated audio processing and AI analysis pipeline:
+
+### 1. Audio Format Conversion
+IoT stethoscopes typically record raw, chunked byte-streams to maintain low latency transmission. Before applying machine learning, the backend reconstructs these streaming chunks into standardized `.wav` files. This conversion is essential because:
+- **Consistent Sampling Rates:** It ensures the AI models ingest uniform frequency data (e.g., 16kHz), perfectly matching the environment the models were trained on.
+- **Data Integrity:** Injecting proper WAV headers over raw binary octet-streams ensures that downstream Python audio libraries (like Librosa or SciPy) can parse and analyze the files correctly without distortion.
+
+### 2. Digital Signal Processing (DSP) & Feature Extraction
+Once standardized, the audio undergoes extensive DSP:
+- **Noise Reduction & Filtering:** Band-pass filters are applied to isolate the human respiratory frequency bands, effectively eliminating ambient room noise and cardiovascular artifacts.
+- **Mel-Spectrogram Generation:** Time-series audio data is converted into Mel-Spectrograms (visual spectrum representations mapped to the Mel scale). This is the key transformation that allows Convolutional Neural Networks (CNNs) to process audio signatures as image categorization tasks.
+- **Anomaly Peak Detection:** Specialized algorithms scan the signal envelopes for sudden amplitude spikes or abnormal energy concentrations to detect fine/coarse crackles, or continuous musical sounds indicating wheezes.
+- **Feature Vector Extraction:** The pipeline additionally extracts MFCCs (Mel-Frequency Cepstral Coefficients) and zero-crossing rates to build a comprehensive feature vector mapping out the respiratory topography.
+
+### 3. Assembling Database Chunks for AI Analysis
+Large consultation recordings are stored efficiently as distributed chunks within MongoDB GridFS. When a doctor requests an AI analysis:
+1. The Node.js backend streams, fetches, and reassembles these partial chunks from the database into a contiguous, complete audio buffer.
+2. Node.js sends this assembled buffer payload to our dedicated Python **FastAPI** microservice endpoints over REST.
+3. The FastAPI service processes the audio through the pipeline described above, evaluates the Mel-Spectrograms against the pre-trained ICBHI RespiScope model, and returns the inferred respiratory condition and anomaly timestamps back to the Node.js backend to display in the UI.
 
 ## 📡 API Endpoints
 

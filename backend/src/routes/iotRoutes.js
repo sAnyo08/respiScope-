@@ -15,7 +15,7 @@ router.get("/active-consultation/:patientId", async (req, res) => {
   try {
     const consultation = await Consultation.findOne({
       patientId: req.params.patientId,
-      status: "active"
+      status: { $in: ["active", "pending"] }
     }).sort({ createdAt: -1 });
 
     if (!consultation) {

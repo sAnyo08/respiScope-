@@ -4,10 +4,10 @@
 #include "driver/i2s.h"
 
 // ---------------- CONFIG ----------------
-const char* ssid = "takemine";
-const char* password = "youaresexy";
+const char* ssid = "AdarshOppo";
+const char* password = "17032005";
 
-const char* serverIP = "10.73.78.31";
+const char* serverIP = "10.37.200.110";
 const int serverPort = 5000;
 
 const char* PATIENT_ID = "69a810ef46b0895ac985c4f4"; 
@@ -42,16 +42,54 @@ int chunkIndex = 0;
 bool isRecording = false;
 bool wasRecording = false;
 
-void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
-  if (type == WStype_TEXT) {
-    String msg = (char*)payload;
-    if (msg == "START") {
-      isRecording = true;
-      Serial.println("Received START signal");
-    } else if (msg == "STOP") {
-      isRecording = false;
-      Serial.println("Received STOP signal");
+// FreeRTOS Queue for HTTP uploads
+QueueHandle_t uploadQueue;
+
+typedef struct {
+  int chunkIndex;
+  int16_t* data;
+} UploadMessage;
+
+void uploadTask(void *pvParameters) {
+  UploadMessage msg;
+  while (true) {
+    if (xQueueReceive(uploadQueue, &msg, portMAX_DELAY)) {
+      HTTPClient http;
+      String url = "http://" + String(serverIP) + ":" + String(serverPort) +
+                   "/api/iot/upload/" + consultationId + "?index=" + String(msg.chunkIndex);
+
+      http.begin(url);
+      http.addHeader("Content-Type", "application/octet-stream");
+
+      int res = http.POST((uint8_t*)msg.data, CHUNK_BYTES);
+      http.end();
+
+      Serial.printf("Chunk %d sent via HTTP, res=%d\n", msg.chunkIndex, res);
+      free(msg.data);
     }
+  }
+}
+
+void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
+  switch(type) {
+    case WStype_DISCONNECTED:
+      Serial.println("[WSc] Disconnected!");
+      break;
+    case WStype_CONNECTED:
+      Serial.printf("[WSc] Connected to url: %s\n", payload);
+      break;
+    case WStype_TEXT:
+      {
+        String msg = (char*)payload;
+        if (msg == "START") {
+          isRecording = true;
+          Serial.println("Received START signal");
+        } else if (msg == "STOP") {
+          isRecording = false;
+          Serial.println("Received STOP signal");
+        }
+      }
+      break;
   }
 }
 
@@ -68,27 +106,6 @@ void setup() {
 
   Serial.println("\nWiFi Connected");
   Serial.println(WiFi.localIP());
-
-  // Fetch consultation ID
-  HTTPClient http;
-  String url = "http://" + String(serverIP) + ":" + String(serverPort) + "/api/iot/active-consultation/" + String(PATIENT_ID);
-  
-  http.begin(url);
-  int code = http.GET();
-
-  if (code == 200) {
-    String payload = http.getString();
-    int start = payload.indexOf("consultationId\":\"") + 17;
-    int end = payload.indexOf("\"", start);
-    consultationId = payload.substring(start, end);
-  }
-
-  http.end();
-
-  // WebSocket
-  String wsPath = "/iot-stream?consultationId=" + consultationId + "&device=esp32";
-  webSocket.begin(serverIP, serverPort, wsPath.c_str());
-  webSocket.onEvent(webSocketEvent);
 
   // I2S Config
   i2s_config_t i2s_config = {
@@ -113,17 +130,57 @@ void setup() {
   i2s_set_pin(I2S_PORT, &pin_config);
 
   Serial.println("I2S Ready");
+
+  // Create Upload Task
+  uploadQueue = xQueueCreate(5, sizeof(UploadMessage));
+  xTaskCreatePinnedToCore(uploadTask, "Upload Task", 8192, NULL, 1, NULL, 0);
 }
 
 // ---------------- LOOP ----------------
 void loop() {
 
-  webSocket.loop();
-
   if (consultationId == "") {
-    delay(2000);
+    // Fetch consultation ID
+    HTTPClient http;
+    String url = "http://" + String(serverIP) + ":" + String(serverPort) + "/api/iot/active-consultation/" + String(PATIENT_ID);
+    
+    http.begin(url);
+    int code = http.GET();
+
+    if (code == 200) {
+      String payload = http.getString();
+      int keyIdx = payload.indexOf("\"consultationId\"");
+      if (keyIdx != -1) {
+        int colonIdx = payload.indexOf(':', keyIdx);
+        int quote1 = payload.indexOf('"', colonIdx);
+        int quote2 = payload.indexOf('"', quote1 + 1);
+        if (quote1 != -1 && quote2 != -1) {
+          consultationId = payload.substring(quote1 + 1, quote2);
+          Serial.println("Linked to Consultation ID: " + consultationId);
+          
+          // Initialize WebSocket ONLY after we have the ID!
+          String wsPath = "/iot-stream?consultationId=" + consultationId + "&device=esp32";
+          webSocket.begin(serverIP, serverPort, wsPath.c_str());
+          webSocket.onEvent(webSocketEvent);
+          Serial.println("WebSocket Initialized!");
+        } else {
+          Serial.println("Malformed JSON for consultationId");
+        }
+      } else {
+        Serial.println("No consultationId found in payload");
+      }
+    } else {
+      Serial.println("No active consultation. Retrying...");
+    }
+
+    http.end();
+    if (consultationId == "") {
+      delay(3000);
+    }
     return;
   }
+
+  webSocket.loop();
 
   if (!isRecording) {
     if (wasRecording) {
@@ -175,17 +232,21 @@ void loop() {
 
     webSocket.sendBIN((uint8_t*)chunkBuffer, CHUNK_BYTES);
 
-    HTTPClient http;
-    String url = "http://" + String(serverIP) + ":" + String(serverPort) +
-                 "/api/iot/upload/" + consultationId + "?index=" + String(chunkIndex);
-
-    http.begin(url);
-    http.addHeader("Content-Type", "application/octet-stream");
-
-    int res = http.POST((uint8_t*)chunkBuffer, CHUNK_BYTES);
-    http.end();
-
-    Serial.printf("Chunk %d sent (%d bytes), res=%d\n", chunkIndex, CHUNK_BYTES, res);
+    // Queue chunk for background HTTP upload
+    int16_t* bufferCopy = (int16_t*)malloc(CHUNK_BYTES);
+    if (bufferCopy != NULL) {
+      memcpy(bufferCopy, chunkBuffer, CHUNK_BYTES);
+      UploadMessage msg;
+      msg.chunkIndex = chunkIndex;
+      msg.data = bufferCopy;
+      
+      if (xQueueSend(uploadQueue, &msg, 0) != pdTRUE) {
+        Serial.println("Upload queue full! HTTP Chunk dropped.");
+        free(bufferCopy);
+      }
+    } else {
+      Serial.println("Malloc failed! HTTP Chunk dropped.");
+    }
 
     chunkIndex++;
     chunkOffset = 0;

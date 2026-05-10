@@ -40,7 +40,6 @@ const wss = new WebSocket.Server({
 
 let browserClients = [];
 let esp32Clients = new Map(); // consultationId -> ws
-let streamBuffers = new Map(); // consultationId -> Buffer chunks
 
 wss.on("connection", (ws, req) => {
   const urlParams = new URLSearchParams(req.url.split('?')[1]);
@@ -56,18 +55,9 @@ wss.on("connection", (ws, req) => {
     if (consultationId) {
       esp32Clients.set(consultationId, ws);
     }
-    
-    if (consultationId && !streamBuffers.has(consultationId)) {
-      streamBuffers.set(consultationId, []);
-    }
 
     ws.on("message", (data) => {
-      // 1. Buffer for persistence
-      if (consultationId && streamBuffers.has(consultationId)) {
-        streamBuffers.get(consultationId).push(Buffer.from(data));
-      }
-
-      // 2. Broadcast to browser listeners
+      // 1. Broadcast to browser listeners
       browserClients.forEach((client) => {
         if (client.readyState === WebSocket.OPEN) {
           // If browser client is also filtered by consultationId, we can add that logic
@@ -77,44 +67,9 @@ wss.on("connection", (ws, req) => {
     });
 
     ws.on("close", async () => {
-      console.log("Stream source disconnected. Finalizing recording...");
+      console.log("Stream source disconnected.");
       if (consultationId) {
         esp32Clients.delete(consultationId);
-      }
-      if (consultationId && streamBuffers.has(consultationId)) {
-        const chunks = streamBuffers.get(consultationId);
-        streamBuffers.delete(consultationId);
-
-        if (chunks.length > 0) {
-          try {
-            const combinedData = Buffer.concat(chunks);
-            const wavHeader = createWavHeader(combinedData.length);
-            const wavBuffer = Buffer.concat([wavHeader, combinedData]);
-
-            const bucket = new GridFSBucket(mongoose.connection.db, { bucketName: "uploads" });
-            const uploadStream = bucket.openUploadStream(`stream-${Date.now()}.wav`, { contentType: "audio/wav" });
-            
-            uploadStream.end(wavBuffer);
-            uploadStream.on("finish", async () => {
-              const consultation = await Consultation.findById(consultationId);
-              if (consultation) {
-                const message = await Message.create({
-                  consultationId,
-                  senderId: consultation.patientId,
-                  receiverId: consultation.doctorId,
-                  senderRole: "patient",
-                  messageType: "audio",
-                  fileId: uploadStream.id,
-                  fileName: `Live_Stream_${new Date().toLocaleTimeString()}.wav`
-                });
-                io.to(consultationId.toString()).emit("new-message", message);
-                console.log("Stream saved to DB successfully");
-              }
-            });
-          } catch (err) {
-            console.error("Failed to save stream:", err);
-          }
-        }
       }
     });
 

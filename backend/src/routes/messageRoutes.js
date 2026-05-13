@@ -39,7 +39,7 @@ router.get("/file/public/:id", getFile);
 
 router.get(
   "/consultation/:id/audio",
-  auth("doctor"),
+  auth(),
   getConsultationAudioMessages
 );
 

@@ -25,4 +25,18 @@ router.post(
   }
 );
 
+// POST /api/audio/process-point/:pointId
+router.post(
+  "/process-point/:pointId",
+  auth("doctor"),
+  audioController.processRecordingPoint
+);
+
+// POST /api/audio/ai-analyze-point/:pointId
+router.post(
+  "/ai-analyze-point/:pointId",
+  auth("doctor"),
+  audioController.analyzeRecordingPointWithAI
+);
+
 module.exports = router;

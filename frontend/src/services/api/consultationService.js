@@ -1,12 +1,39 @@
 import api from "./api";
 
-export const createConsultation = async (doctorId) => {
+export const createConsultation = async (doctorId, type = "heart") => {
   try {
-    const response = await api.post("/consultations", { doctorId });
+    const response = await api.post("/consultations", { doctorId, type });
     return response.data;
   } catch (error) {
     const msg = error.response?.data?.message || error.message || "Failed to create consultation";
     throw new Error(msg);
+  }
+};
+
+export const addRecordingPoint = async (consultationId, pointData) => {
+  try {
+    const response = await api.post(`/consultations/${consultationId}/points`, pointData);
+    return response.data;
+  } catch (error) {
+    throw new Error(error.response?.data?.message || "Failed to add recording point");
+  }
+};
+
+export const completeConsultation = async (consultationId, notes = "") => {
+  try {
+    const response = await api.post(`/consultations/${consultationId}/complete`, { notes });
+    return response.data;
+  } catch (error) {
+    throw new Error(error.response?.data?.message || "Failed to complete consultation");
+  }
+};
+
+export const getConsultationDetails = async (consultationId) => {
+  try {
+    const response = await api.get(`/consultations/${consultationId}`);
+    return response.data;
+  } catch (error) {
+    throw new Error(error.response?.data?.message || "Failed to fetch consultation details");
   }
 };
 

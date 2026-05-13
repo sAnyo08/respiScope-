@@ -11,6 +11,7 @@ import { getDoctorConsultations, getConsultationsMessages } from "../../../servi
 import DoctorProfile from "../../../components/utils/doctorProfile"
 import Navbar from "../../utils/Navbar"
 import { motion } from "framer-motion"
+import DataTable from "../../ui/DataTable"
 
 const DoctorDashboard = () => {
   const { user } = useContext(AuthContext);
@@ -94,12 +95,14 @@ const DoctorDashboard = () => {
   // Helper function to get status badge color - updated for dark glass theme
   const getStatusColor = (status) => {
     switch (status?.toLowerCase()) {
-      case 'pending':
-        return 'bg-amber-500/20 text-amber-400 border-amber-500/30';
-      case 'completed':
-        return 'bg-green-500/20 text-green-400 border-green-500/30';
-      case 'in-progress':
+      case 'recording':
         return 'bg-blue-500/20 text-blue-400 border-blue-500/30';
+      case 'submitted':
+        return 'bg-amber-500/20 text-amber-400 border-amber-500/30';
+      case 'reviewed':
+        return 'bg-green-500/20 text-green-400 border-green-500/30';
+      case 'completed':
+        return 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30';
       default:
         return 'bg-white/10 text-gray-300 border-white/20';
     }
@@ -286,6 +289,15 @@ const DoctorDashboard = () => {
 
                         {/* Action Buttons */}
                         <div className="flex w-full md:w-auto gap-2">
+                          {c.status === 'submitted' && (
+                            <Button
+                              onClick={() => navigate(`/review/${c._id}`)}
+                              variant="default"
+                              className="w-full md:w-auto bg-amber-600 hover:bg-amber-500 text-white"
+                            >
+                              Review Session
+                            </Button>
+                          )}
                           <Button
                             onClick={() => handleOpenChat(c)}
                             variant="default"
@@ -377,71 +389,65 @@ const DoctorDashboard = () => {
               </CardContent>
             </Card>
 
-            {/* Consultations Grid */}
-            {consultations.length > 0 ? (
-               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {consultations.map((c) => (
-                  <Card key={c._id} className="group hover:-translate-y-1 transition-transform duration-300">
-                    <CardContent className="p-6 flex flex-col h-full">
-                      {/* Status Badge */}
-                      <div className="flex items-center justify-between mb-4">
-                        <span className={`px-3 py-1 rounded-full text-xs font-semibold border backdrop-blur-md ${getStatusColor(c.status)}`}>
-                          {c.status || 'Pending'}
-                        </span>
-                        <Calendar className="w-4 h-4 text-teal-100/40" />
+            <DataTable 
+              pageSize={10}
+              columns={[
+                { 
+                  header: "Patient", 
+                  render: (c) => (
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-teal-500/20 flex items-center justify-center">
+                        <User className="w-4 h-4 text-teal-400" />
                       </div>
-
-                      {/* Patient Info */}
-                      <div className="mb-4">
-                        <div className="flex items-center gap-3 mb-3">
-                          <div className="w-12 h-12 bg-gradient-to-br from-teal-400/20 to-emerald-600/20 border border-teal-500/30 rounded-full flex items-center justify-center">
-                            <User className="w-6 h-6 text-teal-300" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <h3 className="font-bold text-white text-lg truncate">
-                              {c.patientId?.name || 'Unknown Patient'}
-                            </h3>
-                            <p className="text-sm text-teal-100/60 truncate">ID: {c.patientId?._id?.slice(-6) || 'N/A'}</p>
-                          </div>
-                        </div>
+                      <div>
+                        <p className="font-bold">{c.patientId?.name || 'Unknown'}</p>
+                        <p className="text-xs text-teal-100/40">ID: {c.patientId?._id?.slice(-6)}</p>
                       </div>
-
-                      {/* Additional Info */}
-                      <div className="space-y-2 mb-6 pt-4 border-t border-white/10 flex-grow">
-                        <div className="flex items-center gap-2 text-sm text-teal-100/80">
-                          <Clock className="w-4 h-4 opacity-70" />
-                          <span>Created: {new Date(c.createdAt).toLocaleDateString()}</span>
-                        </div>
-                      </div>
-
-                      {/* Action Buttons */}
-                      <div className="flex flex-col gap-2 mt-auto">
-                        <Button onClick={() => handleOpenChat(c)} className="w-full">
-                          <MessageSquare className="w-4 h-4 mr-2" />
-                          Open Chat
+                    </div>
+                  )
+                },
+                { 
+                  header: "Date", 
+                  render: (c) => (
+                    <div className="flex items-center gap-2">
+                      <Calendar className="w-4 h-4 opacity-50" />
+                      <span>{new Date(c.createdAt).toLocaleDateString()}</span>
+                    </div>
+                  )
+                },
+                { 
+                  header: "Status", 
+                  render: (c) => (
+                    <span className={`px-3 py-1 rounded-full text-[10px] font-bold border backdrop-blur-md uppercase tracking-tighter ${getStatusColor(c.status)}`}>
+                      {c.status || 'Pending'}
+                    </span>
+                  )
+                },
+                { 
+                  header: "Actions", 
+                  render: (c) => (
+                    <div className="flex gap-2">
+                      {c.status === 'submitted' && (
+                        <Button 
+                          size="sm"
+                          onClick={() => navigate(`/review/${c._id}`)} 
+                          className="bg-amber-600 hover:bg-amber-500 text-white h-8 text-xs"
+                        >
+                          Review
                         </Button>
-                        <Button onClick={() => onViewDetails(c.patientId)} variant="secondary" className="w-full">
-                          <Stethoscope className="w-4 h-4 mr-2" />
-                          View Details
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            ) : (
-              <Card>
-                <CardContent className="p-12 flex flex-col items-center justify-center text-center">
-                  <div className="w-20 h-20 bg-teal-500/10 rounded-full border border-teal-500/30 flex items-center justify-center mb-4 shadow-[0_0_20px_rgba(20,184,166,0.1)]">
-                    <MessageSquare className="w-10 h-10 text-teal-400" />
-                  </div>
-                  <h3 className="text-xl font-semibold text-white mb-2">No Consultations Yet</h3>
-                  <p className="text-teal-100/60 max-w-md">
-                    You don't have any active consultations at the moment. New consultations will appear here.
-                  </p>
-                </CardContent>
-              </Card>
-            )}
+                      )}
+                      <Button size="sm" onClick={() => handleOpenChat(c)} className="h-8 text-xs">
+                        Chat
+                      </Button>
+                      <Button size="sm" onClick={() => onViewDetails(c.patientId)} variant="secondary" className="h-8 text-xs">
+                        Details
+                      </Button>
+                    </div>
+                  )
+                }
+              ]}
+              data={consultations}
+            />
           </motion.div>
         )}
 

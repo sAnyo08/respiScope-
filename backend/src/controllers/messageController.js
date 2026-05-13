@@ -152,7 +152,7 @@ exports.getConsultationAudioMessages = async (req, res) => {
   try {
     const messages = await Message.find({
       consultationId: req.params.id,
-      messageType: "audio",
+      messageType: { $in: ["audio", "audio_processed"] },
     }).sort({ createdAt: -1 });
 
     res.json(messages);

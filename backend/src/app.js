@@ -8,6 +8,7 @@ const messageRoutes = require("./routes/messageRoutes");
 const consultationRoutes = require("./routes/consultationRoutes");
 const audioRoutes = require("./routes/audioRoutes");
 const iotRoutes = require("./routes/iotRoutes");
+const reviewRoutes = require("./routes/reviewRoutes");
 
 const http = require("http");
 const WebSocket = require("ws");
@@ -56,6 +57,7 @@ app.use("/api/messages", messageRoutes);
 app.use("/api/audio", audioRoutes);
 app.use("/api/iot", iotRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/reviews", reviewRoutes);
 
 app.get("/api/health", (req, res) => res.json({ ok: true }));
 

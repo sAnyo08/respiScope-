@@ -441,7 +441,7 @@ const SendMessagePage = () => {
                                 <a href={`${FILE_BASE_URL}/${msg.fileId}`} download={msg.fileName || "recording.wav"} className={`text-[10px] font-bold hover:underline flex items-center gap-1 uppercase tracking-wider ${isSender ? "text-teal-100" : "text-teal-400"}`}>
                                   <Download className="w-3 h-3" /> Get Original
                                 </a>
-                                {role === "doctor" && (
+                                {(isSender || role === "doctor") && (
                                   <button 
                                     onClick={() => deleteMessage(msg._id)}
                                     className={`p-1.5 rounded-lg transition-colors ${isSender ? "hover:bg-red-500/30 text-white hover:text-red-200" : "hover:bg-red-500/20 text-red-400"}`}

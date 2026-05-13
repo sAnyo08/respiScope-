@@ -15,6 +15,7 @@ const DrPatients = lazy(() => import("./components/pages/doctor/DrPatients"));
 const SendMessagePage = lazy(() => import("./components/pages/sendMessagePage"));
 
 const PatientDetails = lazy(() => import("./components/pages/doctor/PatientDetails"));
+const SessionReview = lazy(() => import("./components/pages/doctor/SessionReview"));
 const AdminDashboard = lazy(() => import("./components/pages/AdminDashboard"));
 const AdminAuth = lazy(() => import("./services/auth/AdminAuthPage"));
 
@@ -73,6 +74,14 @@ const AnimatedRoutes = () => {
           element={
             <ProtectedRoute requiredRole="doctor">
               <PageWrapper><PatientDetails /></PageWrapper>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/review/:consultationId"
+          element={
+            <ProtectedRoute requiredRole="doctor">
+              <PageWrapper><SessionReview /></PageWrapper>
             </ProtectedRoute>
           }
         />

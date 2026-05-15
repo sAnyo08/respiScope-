@@ -158,6 +158,18 @@ const PatientDetails = () => {
     }
   };
 
+  // const deleteMessage = async (messageId) => {
+  //   if (!window.confirm("Are you sure you want to delete this shared recording?")) return;
+  //   try {
+  //     await api.delete(`/messages/${messageId}`);
+  //     setAudioMessages(prev => prev.filter(m => m._id !== messageId));
+  //     addToast("Shared recording deleted successfully", "success");
+  //   } catch (err) {
+  //     console.error("Delete message failed", err);
+  //     addToast("Failed to delete recording", "error");
+  //   }
+  // };
+
   const FILE_BASE_URL = BASE_API_URL.replace("/api", "/api/messages/file/public");
 
   const getStatusColor = (status) => {
@@ -578,51 +590,117 @@ const PatientDetails = () => {
                       {audioMessages.length} Shared Files
                     </div>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {audioMessages.map((msg) => (
-                      <Card key={msg._id} className="bg-white/5 border-white/10 hover:border-purple-500/30 transition-all group overflow-hidden">
-                        <CardContent className="p-6">
-                          <div className="flex justify-between items-start mb-4">
-                            <div className="flex items-center gap-3">
-                              <div className="p-2.5 bg-purple-500/10 rounded-xl border border-purple-500/20 text-purple-400">
-                                <Clock className="w-4 h-4" />
+                  <div className="grid grid-cols-1 gap-8">
+                    {audioMessages.map((msg, index) => (
+                      <Card key={msg._id} className="bg-white/5 border-white/10 hover:border-purple-500/30 transition-all overflow-hidden group shadow-2xl">
+                        <CardContent className="p-0 grid grid-cols-1 xl:grid-cols-12">
+                          {/* Audio & Waveform Side */}
+                          <div className="xl:col-span-5 p-6 border-b xl:border-b-0 xl:border-r border-white/10 flex flex-col justify-between">
+                            <div className="space-y-4">
+                              <div className="flex justify-between items-start">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-10 h-10 bg-purple-500/10 rounded-xl border border-purple-500/20 flex items-center justify-center text-purple-400">
+                                    <MessageSquare className="w-5 h-5" />
+                                  </div>
+                                  <div>
+                                    <h4 className="font-bold text-white text-base">Shared Recording #{index + 1}</h4>
+                                    <p className="text-[9px] text-teal-100/40 uppercase tracking-widest font-bold">
+                                      {new Date(msg.createdAt).toLocaleDateString()} • {new Date(msg.createdAt).toLocaleTimeString()}
+                                    </p>
+                                  </div>
+                                </div>
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm" 
+                                  onClick={() => deleteMessage(msg._id)}
+                                  className="text-red-400 hover:bg-red-500/10 h-8 w-8 p-0"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
                               </div>
-                              <div>
-                                <p className="text-white font-bold text-sm">Recording {new Date(msg.createdAt).toLocaleDateString()}</p>
-                                <p className="text-[10px] text-teal-100/40 uppercase font-bold tracking-widest">
-                                  Sent at {new Date(msg.createdAt).toLocaleTimeString()}
-                                </p>
+
+                              <div className="bg-black/60 p-4 rounded-2xl border border-white/5 shadow-inner relative overflow-hidden">
+                                <AudioWaveform 
+                                  fileId={msg.filteredFileId || msg.fileId} 
+                                  peaks={msg.aiAnalysis?.peaks} 
+                                />
+                              </div>
+
+                              <div className="space-y-3">
+                                <audio 
+                                  controls 
+                                  src={`${BASE_API_URL}/messages/file/public/${msg.filteredFileId || msg.fileId}`} 
+                                  className="w-full h-9 custom-audio-player"
+                                />
+                                
+                                <div className="grid grid-cols-2 gap-2">
+                                  {!msg.filteredFileId ? (
+                                    <Button
+                                      size="sm"
+                                      onClick={() => processAudio(msg._id)}
+                                      className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold h-10 rounded-lg text-[11px]"
+                                    >
+                                      Run DSP Filter
+                                    </Button>
+                                  ) : (
+                                    <div className="h-10 flex items-center justify-center bg-emerald-500/10 text-emerald-400 rounded-lg text-[10px] font-bold border border-emerald-500/20">
+                                      <ShieldCheck className="w-3.5 h-3.5 mr-1.5" />
+                                      FILTERED
+                                    </div>
+                                  )}
+
+                                  {!msg.aiAnalysis || msg.aiAnalysis.status !== 'completed' ? (
+                                    <Button
+                                      size="sm"
+                                      onClick={() => runAIAnalysis(msg._id)}
+                                      disabled={msg.aiAnalysis?.status === 'pending' || !msg.filteredFileId}
+                                      className="bg-teal-600 hover:bg-teal-500 text-white font-bold h-10 rounded-lg text-[11px]"
+                                    >
+                                      {msg.aiAnalysis?.status === 'pending' ? 'Analyzing...' : 'AI Analysis'}
+                                    </Button>
+                                  ) : (
+                                    <div className="h-10 flex items-center justify-center bg-teal-500/10 text-teal-400 rounded-lg text-[10px] font-bold border border-teal-500/20">
+                                      <Activity className="w-3.5 h-3.5 mr-1.5" />
+                                      ANALYZED
+                                    </div>
+                                  )}
+                                </div>
                               </div>
                             </div>
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              onClick={() => deleteMessage(msg._id)}
-                              className="text-red-400 hover:bg-red-500/10 h-8 w-8 p-0"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
-                          
-                          <div className="bg-black/40 p-4 rounded-2xl border border-white/5 mb-4">
-                            <audio 
-                              controls 
-                              src={`${BASE_API_URL}/messages/file/public/${msg.fileId}`} 
-                              className="w-full h-8 custom-audio-player"
-                            />
+
+                            <div className="mt-4 pt-4 border-t border-white/5 flex justify-between items-center">
+                              <a 
+                                href={`${BASE_API_URL}/messages/file/public/${msg.fileId}`} 
+                                download={msg.fileName || "shared_audio.wav"}
+                                className="text-[9px] font-bold text-purple-400 hover:text-purple-300 flex items-center gap-1.5 uppercase tracking-widest"
+                              >
+                                <Download className="w-3 h-3" /> Raw Audio
+                              </a>
+                              <span className="text-[9px] text-teal-100/20 font-bold uppercase">
+                                {msg.fileSize ? (msg.fileSize / 1024 / 1024).toFixed(2) + ' MB' : 'N/A'}
+                              </span>
+                            </div>
                           </div>
 
-                          <div className="flex justify-between items-center">
-                            <a 
-                              href={`${BASE_API_URL}/messages/file/public/${msg.fileId}`} 
-                              download={msg.fileName || "shared_audio.wav"}
-                              className="text-[10px] font-bold text-purple-400 hover:text-purple-300 flex items-center gap-2 uppercase tracking-widest"
-                            >
-                              <Download className="w-3 h-3" /> Download File
-                            </a>
-                            <span className="text-[10px] text-teal-100/20 font-bold uppercase">
-                              {msg.fileSize ? (msg.fileSize / 1024 / 1024).toFixed(2) + ' MB' : 'N/A'}
-                            </span>
+                          {/* Diagnostic Results Side */}
+                          <div className="xl:col-span-7 p-6 bg-black/20">
+                            {msg.aiAnalysis?.status === 'completed' ? (
+                              <div className="h-full">
+                                <h5 className="text-purple-400 font-bold uppercase tracking-widest text-[10px] mb-4 flex items-center gap-2">
+                                  <Clock className="w-3.5 h-3.5" /> AI DIAGNOSTIC INSIGHT
+                                </h5>
+                                <AIAnalysisCard analysis={msg.aiAnalysis} />
+                              </div>
+                            ) : (
+                              <div className="h-full flex flex-col items-center justify-center text-center space-y-3 opacity-40">
+                                <div className="w-16 h-16 bg-purple-500/5 rounded-full border border-purple-500/10 flex items-center justify-center text-purple-900/30">
+                                  <Settings2 className="w-8 h-8" />
+                                </div>
+                                <p className="text-[10px] text-teal-100/30 font-bold uppercase tracking-[0.2em] max-w-[180px]">
+                                  Run AI analysis to unlock insights
+                                </p>
+                              </div>
+                            )}
                           </div>
                         </CardContent>
                       </Card>

@@ -216,3 +216,38 @@ exports.getPatientConsultationsForDoctor = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+// Get participant info for a consultation
+exports.getParticipantInfo = async (req, res) => {
+  try {
+    const { consultationId } = req.params;
+    const consultation = await Consultation.findById(consultationId);
+    
+    if (!consultation) {
+      return res.status(404).json({ message: "Consultation not found" });
+    }
+
+    const userId = req.userId.toString();
+    const userRole = req.role;
+
+    let targetId;
+    let targetModel;
+
+    if (userRole === "patient") {
+      targetId = consultation.doctorId;
+      targetModel = "Doctor";
+    } else {
+      targetId = consultation.patientId;
+      targetModel = "Patient";
+    }
+
+    const participant = await mongoose.model(targetModel).findById(targetId);
+
+    if (!participant) {
+      return res.status(404).json({ message: "Participant profile not found" });
+    }
+
+    res.status(200).json(participant);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};

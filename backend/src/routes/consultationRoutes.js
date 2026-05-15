@@ -29,4 +29,7 @@ router.get("/:consultationId", auth(), consultationController.getConsultationByI
 // DELETE consultation
 router.delete("/:consultationId", auth(), consultationController.deleteConsultation);
 
+// GET participant info
+router.get("/:consultationId/participant", auth(), consultationController.getParticipantInfo);
+
 module.exports = router;
